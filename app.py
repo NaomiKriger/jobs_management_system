@@ -1,0 +1,42 @@
+from flask import Flask
+
+app = Flask(__name__)
+
+
+@app.route("/")
+def index():
+    return {"message": "Welcome to the jobs management system!"}
+
+
+@app.route("/configure_new_event", methods=["POST"])
+def configure_new_event():
+    return {"message": f"{configure_new_event.__name__} is executed"}
+
+
+@app.route("/upload_job", methods=["POST"])
+def upload_job():
+    return {"message": f"{upload_job.__name__} is executed"}
+
+
+@app.route("/execute_jobs_by_event", methods=["POST"])
+def execute_jobs_by_event():
+    return {"message": f"{execute_jobs_by_event.__name__} is executed"}
+
+
+@app.route("/execute_job_by_id", methods=["POST"])
+def execute_job_by_id():
+    return {"message": f"{execute_job_by_id.__name__} is executed"}
+
+
+@app.route("/view_event_metadata", methods=["GET"])
+def view_event_metadata():
+    return {"message": f"{view_event_metadata.__name__} is executed"}
+
+
+@app.route("/view_job_metadata", methods=["GET"])
+def view_job_metadata():
+    return {"message": f"{view_job_metadata.__name__} is executed"}
+
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000, debug=True)
