@@ -1,6 +1,11 @@
-from flask import Flask
+from http.client import BAD_REQUEST, OK
+
+from flask import Flask, request, make_response
 
 app = Flask(__name__)
+
+# TEMP MOCK TABLE
+events = {}
 
 
 @app.route("/")
@@ -10,7 +15,20 @@ def index():
 
 @app.route("/configure_new_event", methods=["POST"])
 def configure_new_event():
-    return {"message": f"{configure_new_event.__name__} is executed"}
+
+    name = request.json.get("name")
+    schema = request.json.get("schema")
+
+    if not name:
+        return make_response(f"name parameter was not provided", BAD_REQUEST)
+    if not schema:
+        return make_response(f"schema parameter was not provided", BAD_REQUEST)
+
+    if name in events:
+        return make_response(f"event {name} already exists", BAD_REQUEST)
+
+    events.update({name: schema})
+    return make_response(f"event {name} added to the DB", OK)
 
 
 @app.route("/upload_job", methods=["POST"])
