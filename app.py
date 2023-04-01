@@ -1,13 +1,17 @@
+import os
 from http.client import OK
 
 from flask import Flask, make_response, request
 
 from app_validations import configure_new_event_validations
+from db_methods import add_entry
+from models import Event, db
 
 app = Flask(__name__)
-
-# TEMP MOCK TABLE
-events = {}
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("SQLALCHEMY_DATABASE_URI")
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.secret_key = "secret string"
+db.init_app(app)
 
 
 @app.route("/")
@@ -17,13 +21,13 @@ def index():
 
 @app.route("/configure_new_event", methods=["POST"])
 def configure_new_event():
-    validation_response = configure_new_event_validations(events)
+    validation_response = configure_new_event_validations(Event)
     if validation_response:
         return validation_response
 
     event_name = request.json["event_name"]
-    schema = request.json["schema"]
-    events.update({event_name: schema})
+    add_entry(Event(event_name, request.json["schema"]), db)
+
     return make_response(f"event {event_name} added to the DB", OK)
 
 

@@ -1,9 +1,12 @@
 from http.client import BAD_REQUEST
+from typing import Optional
 
-from flask import make_response, request
+from flask import Response, make_response, request
+
+from db_methods import read_table
 
 
-def configure_new_event_validations(events):
+def configure_new_event_validations(event_model) -> Optional[Response]:
     try:
         event_name = request.json["event_name"]
         schema = request.json["schema"]
@@ -15,5 +18,7 @@ def configure_new_event_validations(events):
     if not isinstance(schema, dict):
         return make_response("schema should be a json", BAD_REQUEST)
 
-    if event_name in events:
+    events = read_table(event_model)
+    event_names = [event.event_name for event in events]
+    if event_name in event_names:
         return make_response(f"event {event_name} already exists", BAD_REQUEST)
