@@ -1,6 +1,8 @@
-from http.client import BAD_REQUEST, OK
+from http.client import OK
 
 from flask import Flask, make_response, request
+
+from app_validations import configure_new_event_validations
 
 app = Flask(__name__)
 
@@ -15,20 +17,12 @@ def index():
 
 @app.route("/configure_new_event", methods=["POST"])
 def configure_new_event():
-    try:
-        event_name = request.json["event_name"]
-        schema = request.json["schema"]
-    except KeyError as e:
-        return make_response(f"missing required parameter: {e.args[0]}", BAD_REQUEST)
+    validation_response = configure_new_event_validations(events)
+    if validation_response:
+        return validation_response
 
-    if not isinstance(event_name, str):
-        return make_response("event_name should be a string", BAD_REQUEST)
-    if not isinstance(schema, dict):
-        return make_response("schema should be a json", BAD_REQUEST)
-
-    if event_name in events:
-        return make_response(f"event {event_name} already exists", BAD_REQUEST)
-
+    event_name = request.json["event_name"]
+    schema = request.json["schema"]
     events.update({event_name: schema})
     return make_response(f"event {event_name} added to the DB", OK)
 
