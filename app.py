@@ -1,6 +1,6 @@
 from http.client import BAD_REQUEST, OK
 
-from flask import Flask, request, make_response, jsonify
+from flask import Flask, make_response, request
 
 app = Flask(__name__)
 
