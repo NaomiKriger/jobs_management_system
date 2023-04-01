@@ -1,6 +1,6 @@
 from http.client import BAD_REQUEST, OK
 
-from flask import Flask, request, make_response
+from flask import Flask, request, make_response, jsonify
 
 app = Flask(__name__)
 
@@ -15,20 +15,22 @@ def index():
 
 @app.route("/configure_new_event", methods=["POST"])
 def configure_new_event():
+    try:
+        event_name = request.json["event_name"]
+        schema = request.json["schema"]
+    except KeyError as e:
+        return make_response(f"missing required parameter: {e.args[0]}", BAD_REQUEST)
 
-    name = request.json.get("name")
-    schema = request.json.get("schema")
+    if not isinstance(event_name, str):
+        return make_response("event_name should be a string", BAD_REQUEST)
+    if not isinstance(schema, dict):
+        return make_response("schema should be a json", BAD_REQUEST)
 
-    if not name:
-        return make_response(f"name parameter was not provided", BAD_REQUEST)
-    if not schema:
-        return make_response(f"schema parameter was not provided", BAD_REQUEST)
+    if event_name in events:
+        return make_response(f"event {event_name} already exists", BAD_REQUEST)
 
-    if name in events:
-        return make_response(f"event {name} already exists", BAD_REQUEST)
-
-    events.update({name: schema})
-    return make_response(f"event {name} added to the DB", OK)
+    events.update({event_name: schema})
+    return make_response(f"event {event_name} added to the DB", OK)
 
 
 @app.route("/upload_job", methods=["POST"])
