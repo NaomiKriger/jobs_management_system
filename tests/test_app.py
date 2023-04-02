@@ -1,17 +1,23 @@
+import os
 from http.client import BAD_REQUEST, OK
 
 import pytest
 
-from app import app
+from app import app, db
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def test_client():
-    with app.test_client() as test_client:
-        yield test_client
+    app.config["TESTING"] = True
+    app.testing = True
+    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("SQLALCHEMY_DATABASE")
+    with app.app_context():
+        db.init_app(app)
+        db.create_all()
+        yield app.test_client()
+        db.session.rollback()
+        db.drop_all()
 
-
-# TEST INDEX #
 
 def test_index(test_client):
     response = test_client.get("/")
@@ -37,6 +43,7 @@ def test_valid_input(test_client):
     response = test_client.post("/configure_new_event", json=data)
     assert response.status_code == OK
     assert response.text == f"event {data.get('event_name')} added to the DB"
+    # db.session.remove()
 
 
 def test_missing_parameter(test_client):

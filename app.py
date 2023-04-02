@@ -11,7 +11,6 @@ app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("SQLALCHEMY_DATABASE_URI")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.secret_key = "secret string"
-db.init_app(app)
 
 
 @app.route("/")
@@ -57,4 +56,5 @@ def view_job_metadata():
 
 
 if __name__ == "__main__":
+    db.init_app(app)
     app.run(host="0.0.0.0", port=5000, debug=True)
