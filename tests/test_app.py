@@ -19,13 +19,13 @@ def test_client():
         db.drop_all()
 
 
+# TEST INDEX
+
 def test_index(test_client):
     response = test_client.get("/")
     assert response.status_code == OK
     json_response = response.get_json()
-    assert json_response == {
-        "message": "Welcome to the jobs management system!"
-    }
+    assert json_response == {"message": "Welcome to the jobs management system!"}
     assert "Welcome to the jobs management system!" in response.text
 
 
@@ -43,7 +43,6 @@ def test_valid_input(test_client):
     response = test_client.post("/configure_new_event", json=data)
     assert response.status_code == OK
     assert response.text == f"event {data.get('event_name')} added to the DB"
-    # db.session.remove()
 
 
 def test_missing_parameter(test_client):
@@ -58,9 +57,7 @@ def test_missing_parameter(test_client):
     assert response.text == f"missing required parameter: event_name"
 
     # missing schema parameter
-    response = test_client.post(
-        "/configure_new_event", json={"event_name": "my_event"}
-    )
+    response = test_client.post("/configure_new_event", json={"event_name": "my_event"})
     assert response.status_code == BAD_REQUEST
     assert response.text == f"missing required parameter: schema"
 
