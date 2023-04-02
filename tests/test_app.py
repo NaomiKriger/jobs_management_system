@@ -81,3 +81,18 @@ def test_invalid_parameter_type(test_client):
     response = test_client.post("/configure_new_event", json=data)
     assert response.status_code == BAD_REQUEST
     assert response.text == "schema should be a json"
+
+
+def test_event_name_already_exists_in_db(test_client):
+    data = {
+        "event_name": "my_event",
+        "schema": {
+            "type": "object",
+            "properties": {"name": {"type": "string"}, "age": {"type": "number"}},
+            "required": ["name", "age"],
+        },
+    }
+    test_client.post("/configure_new_event", json=data)
+    response = test_client.post("/configure_new_event", json=data)
+    assert response.status_code == BAD_REQUEST
+    assert response.text == f"event {data.get('event_name')} already exists"
