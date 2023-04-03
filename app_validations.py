@@ -3,7 +3,7 @@ from typing import Optional
 
 from flask import Response, make_response, request
 
-from db_methods import read_table
+from database import read_table
 
 
 def configure_new_event_validations(event_model) -> Optional[Response]:
