@@ -50,13 +50,41 @@ def test_invalid_job_name(test_client):
     assert response.text == "missing required parameter: job_name"
 
 
-@unittest.skip("Not implemented")
 def test_invalid_event_names(test_client):
+    data = {
+        "job_name": "my_job",
+        "event_names": ["event_1", "event_2"],
+        "schema": {
+            "type": "object",
+            "properties": {"name": {"type": "string"}, "age": {"type": "number"}},
+            "required": ["name", "age"],
+        },
+        "job_logic": "TBD",
+        "expiration_days": 365,
+    }
+
     """
-    scenarios: event_names not a list, event names in list are not strings, event_names list is empty,
+    scenarios left to implement: event names in list are not strings,
     at least one event name is not in DB, none of the event names is in DB
     """
-    pass
+
+    data["event_names"] = []
+    response = test_client.post(Endpoint.UPLOAD_JOB.value, json=data)
+    assert response.status_code == BAD_REQUEST
+    assert response.text == f"some required parameters are missing: ['event_names']"
+
+    data["event_names"] = 123
+    response = test_client.post(Endpoint.UPLOAD_JOB.value, json=data)
+    assert response.status_code == BAD_REQUEST
+    assert (
+        response.text
+        == f"event_names type should be a list. event_names provided is {data.get('event_names')}"
+    )
+
+    data.pop("event_names")
+    response = test_client.post(Endpoint.UPLOAD_JOB.value, json=data)
+    assert response.status_code == BAD_REQUEST
+    assert response.text == "missing required parameter: event_names"
 
 
 @unittest.skip("Not implemented")
