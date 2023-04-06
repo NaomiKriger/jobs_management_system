@@ -1,15 +1,18 @@
 import os
 from http.client import OK
 
+from dotenv import load_dotenv
 from flask import Flask, make_response, request
 
-from app_validations import configure_new_event_validations, upload_job_validations
+from app_validations import (configure_new_event_validations,
+                             upload_job_validations)
 from consts import Endpoint
 from database import add_entry
 from models import Event, db
 
+load_dotenv()
 app = Flask(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("SQLALCHEMY_DATABASE_URI")
+app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("SQLALCHEMY_DATABASE_URI")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 
