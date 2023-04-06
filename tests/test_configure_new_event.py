@@ -1,36 +1,7 @@
-import os
 from http.client import BAD_REQUEST, OK
 
-import pytest
-
-from app import app, db
 from consts import Endpoint
 
-
-@pytest.fixture(scope="module")
-def test_client():
-    app.config["TESTING"] = True
-    app.testing = True
-    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("SQLALCHEMY_DATABASE_URI_TEST")
-    with app.app_context():
-        db.init_app(app)
-        db.create_all()
-        yield app.test_client()
-        db.session.rollback()
-        db.drop_all()
-
-
-# TEST INDEX
-
-def test_index(test_client):
-    response = test_client.get("/")
-    assert response.status_code == OK
-    json_response = response.get_json()
-    assert json_response == {"message": "Welcome to the jobs management system!"}
-    assert "Welcome to the jobs management system!" in response.text
-
-
-# TEST CONFIGURE NEW EVENT #
 
 def test_valid_input(test_client):
     data = {
