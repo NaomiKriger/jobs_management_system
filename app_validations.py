@@ -22,3 +22,9 @@ def configure_new_event_validations(event_model) -> Optional[Response]:
     event_names = [event.event_name for event in events]
     if event_name in event_names:
         return make_response(f"event {event_name} already exists", BAD_REQUEST)
+
+
+def upload_job_validations(event_model) -> Optional[Response]:
+    event_names = request.json["event_names"]
+    if not event_names:
+        return make_response("No event names provided. At least one existing event name is required", BAD_REQUEST)

@@ -4,13 +4,14 @@ from http.client import BAD_REQUEST, OK
 import pytest
 
 from app import app, db
+from consts import Endpoint
 
 
 @pytest.fixture(scope="module")
 def test_client():
     app.config["TESTING"] = True
     app.testing = True
-    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("SQLALCHEMY_DATABASE")
+    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("SQLALCHEMY_DATABASE_URI_TEST")
     with app.app_context():
         db.init_app(app)
         db.create_all()
@@ -40,7 +41,7 @@ def test_valid_input(test_client):
             "required": ["name", "age"],
         },
     }
-    response = test_client.post("/configure_new_event", json=data)
+    response = test_client.post(Endpoint.CONFIGURE_NEW_EVENT.value, json=data)
     assert response.status_code == OK
     assert response.text == f"event {data.get('event_name')} added to the DB"
 
@@ -52,12 +53,12 @@ def test_missing_parameter(test_client):
         "properties": {"name": {"type": "string"}, "age": {"type": "number"}},
         "required": ["name", "age"],
     }
-    response = test_client.post("/configure_new_event", json=data)
+    response = test_client.post(Endpoint.CONFIGURE_NEW_EVENT.value, json=data)
     assert response.status_code == BAD_REQUEST
     assert response.text == f"missing required parameter: event_name"
 
     # missing schema parameter
-    response = test_client.post("/configure_new_event", json={"event_name": "my_event"})
+    response = test_client.post(Endpoint.CONFIGURE_NEW_EVENT.value, json={"event_name": "my_event"})
     assert response.status_code == BAD_REQUEST
     assert response.text == f"missing required parameter: schema"
 
@@ -72,13 +73,13 @@ def test_invalid_parameter_type(test_client):
             "required": ["name", "age"],
         },
     }
-    response = test_client.post("/configure_new_event", json=data)
+    response = test_client.post(Endpoint.CONFIGURE_NEW_EVENT.value, json=data)
     assert response.status_code == BAD_REQUEST
     assert response.text == "event_name should be a string"
 
     # schema is not a json
     data = {"event_name": "my_event", "schema": "hey there"}
-    response = test_client.post("/configure_new_event", json=data)
+    response = test_client.post(Endpoint.CONFIGURE_NEW_EVENT.value, json=data)
     assert response.status_code == BAD_REQUEST
     assert response.text == "schema should be a json"
 
@@ -92,7 +93,7 @@ def test_event_name_already_exists_in_db(test_client):
             "required": ["name", "age"],
         },
     }
-    test_client.post("/configure_new_event", json=data)
-    response = test_client.post("/configure_new_event", json=data)
+    test_client.post(Endpoint.CONFIGURE_NEW_EVENT.value, json=data)
+    response = test_client.post(Endpoint.CONFIGURE_NEW_EVENT.value, json=data)
     assert response.status_code == BAD_REQUEST
     assert response.text == f"event {data.get('event_name')} already exists"
