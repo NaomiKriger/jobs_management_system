@@ -1,4 +1,3 @@
-import json
 from http.client import BAD_REQUEST
 from typing import Optional
 
@@ -6,7 +5,7 @@ from flask import Response, make_response, request
 
 from database import read_table
 
-MAP_TYPES_TO_NAMES = {str: "string", int: "integer", list: "list", json: "json"}
+MAP_TYPES_TO_NAMES = {str: "string", int: "integer", list: "list", dict: "json"}
 
 
 # TODO: could probably be validated with JSON schemas
@@ -75,7 +74,7 @@ class UploadJobValidations:
         try:
             params["job_name"] = {"value": request.json["job_name"], "type": str}
             params["event_names"] = {"value": request.json["event_names"], "type": list}
-            params["schema"] = {"value": request.json["schema"], "type": json}
+            params["schema"] = {"value": request.json["schema"], "type": dict}
             params["job_logic"] = {
                 "value": request.json["job_logic"],
                 "type": str,  # TEMP - Docker image
@@ -109,3 +108,14 @@ class UploadJobValidations:
             return make_response(
                 "Non of the provided event names was found in DB", BAD_REQUEST
             )
+        else:
+            events_not_in_db = (
+                set(params["event_names"]["value"]) - event_names_found_in_db
+            )
+            notes = []
+        if events_not_in_db:
+            notes.append(
+                f"the following event names were not found in DB and therefore "
+                f"the job wasn't connected to them: {events_not_in_db}"
+            )
+        return make_response(f"Job uploaded. Notes:{notes}")

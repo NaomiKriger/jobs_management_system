@@ -4,6 +4,7 @@ from http.client import BAD_REQUEST
 from consts import Endpoint
 
 # TODO: create a base_data json, which will be modified per test scenario (yet not modified globally)
+from tests.mocks import basic_schema_mock
 
 
 @unittest.skip("Not implemented")
@@ -18,11 +19,7 @@ def test_invalid_job_name(test_client):
     data = {
         "job_name": "my_job",
         "event_names": ["event_1", "event_2"],
-        "schema": {
-            "type": "object",
-            "properties": {"name": {"type": "string"}, "age": {"type": "number"}},
-            "required": ["name", "age"],
-        },
+        "schema": basic_schema_mock,
         "job_logic": "TBD",
         "expiration_days": 365,
     }
@@ -54,25 +51,23 @@ def test_invalid_event_names(test_client):
     data = {
         "job_name": "my_job",
         "event_names": ["event_1", "event_2"],
-        "schema": {
-            "type": "object",
-            "properties": {"name": {"type": "string"}, "age": {"type": "number"}},
-            "required": ["name", "age"],
-        },
+        "schema": basic_schema_mock,
         "job_logic": "TBD",
         "expiration_days": 365,
     }
 
     """
     scenarios left to implement: event names in list are not strings,
-    at least one event name is not in DB, none of the event names is in DB
+    at least one event name is not in DB
     """
 
+    # empty event names
     data["event_names"] = []
     response = test_client.post(Endpoint.UPLOAD_JOB.value, json=data)
     assert response.status_code == BAD_REQUEST
     assert response.text == f"some required parameters are missing: ['event_names']"
 
+    # event name type is invalid
     data["event_names"] = 123
     response = test_client.post(Endpoint.UPLOAD_JOB.value, json=data)
     assert response.status_code == BAD_REQUEST
@@ -81,10 +76,25 @@ def test_invalid_event_names(test_client):
         == f"event_names type should be a list. event_names provided is {data.get('event_names')}"
     )
 
+    # no event names
     data.pop("event_names")
     response = test_client.post(Endpoint.UPLOAD_JOB.value, json=data)
     assert response.status_code == BAD_REQUEST
     assert response.text == "missing required parameter: event_names"
+    data["event_names"] = ["event_1", "event_2"]
+
+    # non of the event names is found in DB
+    response = test_client.post(Endpoint.UPLOAD_JOB.value, json=data)
+    assert response.status_code == BAD_REQUEST
+    assert response.text == "Non of the provided event names was found in DB"
+
+    # at least one event name is not found in DB
+    data["event_names"] = ["test_event_1", "test_event_2"]
+    response = test_client.post(Endpoint.UPLOAD_JOB.value, json=data)
+    assert response.text == (
+        'Job uploaded. Notes:["the following event names were not found in DB and '
+        "therefore the job wasn't connected to them: {'test_event_2'}\"]"
+    )
 
 
 @unittest.skip("Not implemented")

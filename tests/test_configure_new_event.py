@@ -1,16 +1,13 @@
 from http.client import BAD_REQUEST, OK
 
 from consts import Endpoint
+from tests.mocks import basic_schema_mock
 
 
 def test_valid_input(test_client):
     data = {
         "event_name": "my_event",
-        "schema": {
-            "type": "object",
-            "properties": {"name": {"type": "string"}, "age": {"type": "number"}},
-            "required": ["name", "age"],
-        },
+        "schema": basic_schema_mock,
     }
     response = test_client.post(Endpoint.CONFIGURE_NEW_EVENT.value, json=data)
     assert response.status_code == OK
@@ -40,11 +37,7 @@ def test_invalid_parameter_type(test_client):
     # event_name is not a string
     data = {
         "event_name": 123,
-        "schema": {
-            "type": "object",
-            "properties": {"name": {"type": "string"}, "age": {"type": "number"}},
-            "required": ["name", "age"],
-        },
+        "schema": basic_schema_mock,
     }
     response = test_client.post(Endpoint.CONFIGURE_NEW_EVENT.value, json=data)
     assert response.status_code == BAD_REQUEST
@@ -60,11 +53,7 @@ def test_invalid_parameter_type(test_client):
 def test_event_name_already_exists_in_db(test_client):
     data = {
         "event_name": "my_event",
-        "schema": {
-            "type": "object",
-            "properties": {"name": {"type": "string"}, "age": {"type": "number"}},
-            "required": ["name", "age"],
-        },
+        "schema": basic_schema_mock,
     }
     test_client.post(Endpoint.CONFIGURE_NEW_EVENT.value, json=data)
     response = test_client.post(Endpoint.CONFIGURE_NEW_EVENT.value, json=data)
