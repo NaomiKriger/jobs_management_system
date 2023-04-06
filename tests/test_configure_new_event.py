@@ -29,7 +29,9 @@ def test_missing_parameter(test_client):
     assert response.text == "missing required parameter: event_name"
 
     # missing schema parameter
-    response = test_client.post(Endpoint.CONFIGURE_NEW_EVENT.value, json={"event_name": "my_event"})
+    response = test_client.post(
+        Endpoint.CONFIGURE_NEW_EVENT.value, json={"event_name": "my_event"}
+    )
     assert response.status_code == BAD_REQUEST
     assert response.text == "missing required parameter: schema"
 

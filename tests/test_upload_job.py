@@ -24,7 +24,7 @@ def test_invalid_job_name(test_client):
             "required": ["name", "age"],
         },
         "job_logic": "TBD",
-        "expiration_days": 365
+        "expiration_days": 365,
     }
 
     """
@@ -39,7 +39,10 @@ def test_invalid_job_name(test_client):
     data["job_name"] = 123
     response = test_client.post(Endpoint.UPLOAD_JOB.value, json=data)
     assert response.status_code == BAD_REQUEST
-    assert response.text == f"job_name type should be a string. job_name provided is {data.get('job_name')}"
+    assert (
+        response.text
+        == f"job_name type should be a string. job_name provided is {data.get('job_name')}"
+    )
 
     data.pop("job_name")
     response = test_client.post(Endpoint.UPLOAD_JOB.value, json=data)
