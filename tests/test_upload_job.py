@@ -1,9 +1,11 @@
 import os
 import unittest
+from http.client import BAD_REQUEST
 
 import pytest
 
 from app import app, db
+from consts import Endpoint
 
 
 @pytest.fixture(scope="module")
@@ -19,6 +21,9 @@ def test_client():
         db.drop_all()
 
 
+# TODO: create a base_data json, which will be modified per test scenario (yet not modified globally)
+
+
 @unittest.skip("Not implemented")
 def test_valid_input(test_client):
     """
@@ -27,19 +32,43 @@ def test_valid_input(test_client):
     pass
 
 
-@unittest.skip("Not implemented")
 def test_invalid_job_name(test_client):
+    data = {
+        "job_name": "my_job",
+        "event_names": ["event_1", "event_2"],
+        "schema": {
+            "type": "object",
+            "properties": {"name": {"type": "string"}, "age": {"type": "number"}},
+            "required": ["name", "age"],
+        },
+        "job_logic": "TBD",
+        "expiration_days": 365
+    }
+
     """
-    scenarios: job_name is not a string,
-    job_name already exists
+    scenarios left to implement: job_name already exists
     """
-    pass
+
+    data["job_name"] = ""
+    response = test_client.post(Endpoint.UPLOAD_JOB.value, json=data)
+    assert response.status_code == BAD_REQUEST
+    assert response.text == f"some required parameters are missing: ['job_name']"
+
+    data["job_name"] = 123
+    response = test_client.post(Endpoint.UPLOAD_JOB.value, json=data)
+    assert response.status_code == BAD_REQUEST
+    assert response.text == f"job_name type should be a string. job_name provided is {data.get('job_name')}"
+
+    data.pop("job_name")
+    response = test_client.post(Endpoint.UPLOAD_JOB.value, json=data)
+    assert response.status_code == BAD_REQUEST
+    assert response.text == "missing required parameter: job_name"
 
 
 @unittest.skip("Not implemented")
 def test_invalid_event_names(test_client):
     """
-    scenarios: event_names not a list, event names in list are not strings,
+    scenarios: event_names not a list, event names in list are not strings, event_names list is empty,
     at least one event name is not in DB, none of the event names is in DB
     """
     pass

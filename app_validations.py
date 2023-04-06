@@ -6,6 +6,8 @@ from flask import Response, make_response, request
 from database import read_table
 
 
+# TODO: could probably be validated with JSON schemas
+
 def configure_new_event_validations(event_model) -> Optional[Response]:
     try:
         event_name = request.json["event_name"]
@@ -25,6 +27,21 @@ def configure_new_event_validations(event_model) -> Optional[Response]:
 
 
 def upload_job_validations(event_model) -> Optional[Response]:
-    event_names = request.json["event_names"]
-    if not event_names:
-        return make_response("No event names provided. At least one existing event name is required", BAD_REQUEST)
+    try:
+        job_name = request.json["job_name"]
+        event_names = request.json["event_names"]
+        schema = request.json["schema"]
+        job_logic = request.json["job_logic"]
+        expiration_days = request.json["expiration_days"]
+    except KeyError as e:
+        return make_response(f"missing required parameter: {e.args[0]}", BAD_REQUEST)
+
+    if not isinstance(job_name, str):
+        return make_response(f"job_name type should be a string. job_name provided is {job_name}", BAD_REQUEST)
+
+    empty_arguments = []
+    for argument in ["job_name", "event_names", "schema", "job_logic", "expiration_days"]:
+        if not eval(argument):
+            empty_arguments.append(argument)
+    if empty_arguments:
+        return make_response(f"some required parameters are missing: {empty_arguments}", BAD_REQUEST)
