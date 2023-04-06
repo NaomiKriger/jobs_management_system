@@ -4,8 +4,7 @@ from http.client import OK
 from dotenv import load_dotenv
 from flask import Flask, make_response, request
 
-from app_validations import (configure_new_event_validations,
-                             upload_job_validations)
+from app_validations import UploadJobValidations, configure_new_event_validations
 from consts import Endpoint
 from database import add_entry
 from models import Event, db
@@ -35,7 +34,7 @@ def configure_new_event():
 
 @app.route(Endpoint.UPLOAD_JOB.value, methods=["POST"])
 def upload_job():
-    validation_response = upload_job_validations(Event)
+    validation_response = UploadJobValidations.validate_upload_job(Event)
     if validation_response:
         return validation_response
     return {"message": f"{upload_job.__name__} is executed"}

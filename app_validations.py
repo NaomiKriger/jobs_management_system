@@ -26,33 +26,48 @@ def configure_new_event_validations(event_model) -> Optional[Response]:
         return make_response(f"event {event_name} already exists", BAD_REQUEST)
 
 
-def upload_job_validations(event_model) -> Optional[Response]:
-    try:
-        job_name = request.json["job_name"]
-        event_names = request.json["event_names"]
-        schema = request.json["schema"]
-        job_logic = request.json["job_logic"]
-        expiration_days = request.json["expiration_days"]
-    except KeyError as e:
-        return make_response(f"missing required parameter: {e.args[0]}", BAD_REQUEST)
+class UploadJobValidations:
+    @staticmethod
+    def validate_job_name(job_name: str) -> Optional[Response]:
+        if not isinstance(job_name, str):
+            return make_response(
+                f"job_name type should be a string. job_name provided is {job_name}",
+                BAD_REQUEST,
+            )
 
-    if not isinstance(job_name, str):
-        return make_response(
-            f"job_name type should be a string. job_name provided is {job_name}",
-            BAD_REQUEST,
-        )
+    @staticmethod
+    def validate_empty_parameter(params: dict) -> Optional[Response]:
+        empty_arguments = []
+        for key, value in params.items():
+            if not value:
+                empty_arguments.append(key)
+        if empty_arguments:
+            return make_response(
+                f"some required parameters are missing: {empty_arguments}", BAD_REQUEST
+            )
 
-    empty_arguments = []
-    for argument in [
-        "job_name",
-        "event_names",
-        "schema",
-        "job_logic",
-        "expiration_days",
-    ]:
-        if not eval(argument):
-            empty_arguments.append(argument)
-    if empty_arguments:
-        return make_response(
-            f"some required parameters are missing: {empty_arguments}", BAD_REQUEST
+    @staticmethod
+    def validate_upload_job(event_model) -> Optional[Response]:
+        params = {}
+        try:
+            params["job_name"] = request.json["job_name"]
+            params["event_names"] = request.json["event_names"]
+            params["schema"] = request.json["schema"]
+            params["job_logic"] = request.json["job_logic"]
+            params["expiration_days"] = request.json["expiration_days"]
+        except KeyError as e:
+            return make_response(
+                f"missing required parameter: {e.args[0]}", BAD_REQUEST
+            )
+
+        job_name_validation_response = UploadJobValidations.validate_job_name(
+            params["job_name"]
         )
+        if job_name_validation_response:
+            return job_name_validation_response
+
+        empty_parameter_validation_response = (
+            UploadJobValidations.validate_empty_parameter(params)
+        )
+        if empty_parameter_validation_response:
+            return empty_parameter_validation_response
