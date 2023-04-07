@@ -4,6 +4,7 @@ from typing import Optional
 from flask import Response, make_response, request
 
 from database import read_table
+from models import Job
 
 MAP_TYPES_TO_NAMES = {str: "string", int: "integer", list: "list", dict: "json"}
 
@@ -106,6 +107,15 @@ class UploadJobValidations:
             )
             if response:
                 return response
+
+        job_name_already_exists = Job.query.filter_by(
+            job_name=params["job_name"]["value"]
+        ).first()
+
+        if job_name_already_exists:
+            return make_response(
+                f"Job name {params['job_name']['value']} already exists", BAD_REQUEST
+            )
 
         event_names_found_in_db = event_model.query.filter(
             event_model.event_name.in_(params["event_names"]["value"])
