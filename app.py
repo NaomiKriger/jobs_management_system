@@ -4,12 +4,13 @@ from http.client import OK
 from dotenv import load_dotenv
 from flask import Flask, make_response, request
 
-from app_handlers import upload_job_to_container_registry
+from app_helpers import (add_job_entry, add_job_to_job_in_event,
+                         upload_job_to_container_registry)
 from app_validations import (UploadJobValidations,
                              configure_new_event_validations)
 from consts import Endpoint
 from database import add_entry
-from models import Event, Job, JobInEvent, db
+from models import Event, db
 
 load_dotenv()
 app = Flask(__name__)
@@ -41,22 +42,9 @@ def upload_job():
         return validation_response
 
     job_path = upload_job_to_container_registry(request.json["job_logic"])
-    add_entry(
-        Job(
-            request.json["job_name"],
-            request.json["schema"],
-            request.json["event_names"],
-            job_path,
-            request.json["expiration_days"],
-        ),
-        db,
-    )
-    job = Job.query.filter_by(job_name=request.json["job_name"]).first()
-    event_names_found_in_db = UploadJobValidations.get_events_from_db_per_event_names(
-        request.json["event_names"]
-    )
-    for event in event_names_found_in_db:
-        add_entry(JobInEvent(job, event), db)
+    add_job_entry(job_path, db)
+    add_job_to_job_in_event(db)
+
     return make_response(
         f"{upload_job.__name__} finished successfully. {validation_response.get_data().decode('utf-8')}",
         OK,
