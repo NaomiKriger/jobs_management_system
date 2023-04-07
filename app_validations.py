@@ -60,33 +60,39 @@ class UploadJobValidations:
             )
 
     @staticmethod
-    def get_event_names_found_in_db(event_model, event_names: list) -> set:
-        event_names_in_db = {event.event_name for event in read_table(event_model)}
-        event_names_found = set()
-        for event_name in event_names:
-            if event_name in event_names_in_db:
-                event_names_found.add(event_name)
-        return event_names_found
+    def get_events_from_db_per_event_names(event_model, event_names: set) -> set:
+        events = read_table(event_model)
+        events_to_return = set()
+        for event in events:
+            if event.event_name in event_names:
+                events_to_return.add(event)
+        return events_to_return
 
     @staticmethod
-    def validate_upload_job(event_model) -> Optional[Response]:
-        params = {}
+    def pull_parameters_if_not_missing(params) -> Optional[Response]:
+        param_to_type = [
+            ("job_name", str),
+            ("event_names", list),
+            ("schema", dict),
+            ("job_logic", str),
+            ("expiration_days", int),
+        ]
         try:
-            params["job_name"] = {"value": request.json["job_name"], "type": str}
-            params["event_names"] = {"value": request.json["event_names"], "type": list}
-            params["schema"] = {"value": request.json["schema"], "type": dict}
-            params["job_logic"] = {
-                "value": request.json["job_logic"],
-                "type": str,  # TEMP - Docker image
-            }
-            params["expiration_days"] = {
-                "value": request.json["expiration_days"],
-                "type": int,
-            }
+            for pair in param_to_type:
+                params[pair[0]] = {"value": request.json[pair[0]], "type": pair[1]}
         except KeyError as e:
             return make_response(
                 f"missing required parameter: {e.args[0]}", BAD_REQUEST
             )
+
+    @staticmethod
+    def validate_upload_job(event_model) -> Optional[Response]:
+        params = {}
+        params_pull_response = UploadJobValidations.pull_parameters_if_not_missing(
+            params
+        )
+        if isinstance(params_pull_response, Response):
+            return params_pull_response
 
         empty_parameter_validation_response = (
             UploadJobValidations.validate_empty_parameter(params)
@@ -101,16 +107,16 @@ class UploadJobValidations:
             if response:
                 return response
 
-        event_names_found_in_db = UploadJobValidations.get_event_names_found_in_db(
-            event_model, params["event_names"]["value"]
-        )
+        event_names_found_in_db = event_model.query.filter(
+            event_model.event_name.in_(params["event_names"]["value"])
+        ).all()
         if not event_names_found_in_db:
             return make_response(
                 "Non of the provided event names was found in DB", BAD_REQUEST
             )
         else:
-            events_not_in_db = (
-                set(params["event_names"]["value"]) - event_names_found_in_db
+            events_not_in_db = set(params["event_names"]["value"]) - set(
+                event.event_name for event in event_names_found_in_db
             )
             notes = []
         if events_not_in_db:
