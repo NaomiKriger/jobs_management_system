@@ -22,6 +22,7 @@ def test_valid_input(test_client):
 
     assert response.status_code == OK
     assert job is not None
+    assert job.job_name == data["job_name"]
     assert job_in_event.event_id == event_id
     assert job_in_event.job_id == job.id
     assert response.status_code == OK
@@ -65,10 +66,11 @@ class TestInvalidJobName:
 
     def test_job_name_already_exists(self, test_client):
         self.data["job_name"] = "test_job_1"
-        test_client.post(Endpoint.UPLOAD_JOB.value, json=self.data)
-        response = test_client.post(Endpoint.UPLOAD_JOB.value, json=self.data)
-        assert response.status_code == BAD_REQUEST
-        assert response.text == f"Job name {self.data['job_name']} already exists"
+        response_first = test_client.post(Endpoint.UPLOAD_JOB.value, json=self.data)
+        response_second = test_client.post(Endpoint.UPLOAD_JOB.value, json=self.data)
+        assert response_first.status_code == OK
+        assert response_second.status_code == BAD_REQUEST
+        assert response_second.text == f"Job name {self.data['job_name']} already exists"
 
 
 class TestInvalidEventNames:
@@ -113,7 +115,7 @@ class TestInvalidEventNames:
         assert response.text == "Non of the provided event names was found in DB"
 
     def test_one_event_found_in_db_and_one_event_is_not_found(self, test_client):
-        self.data["job_name"] = "test_job_2"
+        self.data["job_name"] = "test_job_2"   # test_event_1 pre-configured in DB in conftest.py
         self.data["event_names"] = ["test_event_1", "test_event_2"]
         response = test_client.post(Endpoint.UPLOAD_JOB.value, json=self.data)
         job = Job.query.filter_by(job_name=self.data["job_name"]).first()
