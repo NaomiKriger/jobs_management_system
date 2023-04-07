@@ -1,4 +1,4 @@
-from http.client import BAD_REQUEST
+from http.client import BAD_REQUEST, OK
 from typing import Optional
 
 from flask import Response, make_response, request
@@ -124,4 +124,4 @@ class UploadJobValidations:
                 f"the following event names were not found in DB and therefore "
                 f"the job wasn't connected to them: {events_not_in_db}"
             )
-        return make_response(f"Job uploaded. Notes:{notes}")
+        return make_response(f"Job uploaded. Notes:{notes}", OK)

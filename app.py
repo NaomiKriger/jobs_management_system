@@ -4,10 +4,12 @@ from http.client import OK
 from dotenv import load_dotenv
 from flask import Flask, make_response, request
 
-from app_validations import UploadJobValidations, configure_new_event_validations
+from app_handlers import upload_job_to_container_registry
+from app_validations import (UploadJobValidations,
+                             configure_new_event_validations)
 from consts import Endpoint
 from database import add_entry
-from models import Event, db
+from models import Event, Job, JobInEvent, db
 
 load_dotenv()
 app = Flask(__name__)
@@ -35,9 +37,27 @@ def configure_new_event():
 @app.route(Endpoint.UPLOAD_JOB.value, methods=["POST"])
 def upload_job():
     validation_response = UploadJobValidations.validate_upload_job(Event)
-    if validation_response:
+    if validation_response.status_code != OK:
         return validation_response
-    return {"message": f"{upload_job.__name__} is executed"}
+
+    job_path = upload_job_to_container_registry(request.json["job_logic"])
+    add_entry(
+        Job(
+            request.json["job_name"],
+            request.json["schema"],
+            request.json["event_names"],
+            job_path,
+            request.json["expiration_days"],
+        ),
+        db,
+    )
+    job = Job.query.filter_by(job_name=request.json["job_name"]).first()
+    event_names_found_in_db = UploadJobValidations.get_events_from_db_per_event_names(
+        Event, request.json["event_names"]
+    )
+    for event in event_names_found_in_db:
+        add_entry(JobInEvent(job, event), db)
+    return {"message": f"{upload_job.__name__} is executed. {validation_response.get_data().decode('utf-8')}"}
 
 
 @app.route("/execute_jobs_by_event", methods=["POST"])
