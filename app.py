@@ -24,7 +24,7 @@ def index():
 
 @app.route(Endpoint.CONFIGURE_NEW_EVENT.value, methods=["POST"])
 def configure_new_event():
-    validation_response = configure_new_event_validations(Event)
+    validation_response = configure_new_event_validations()
     if validation_response:
         return validation_response
 
@@ -36,7 +36,7 @@ def configure_new_event():
 
 @app.route(Endpoint.UPLOAD_JOB.value, methods=["POST"])
 def upload_job():
-    validation_response = UploadJobValidations.validate_upload_job(Event)
+    validation_response = UploadJobValidations.validate_upload_job()
     if validation_response.status_code != OK:
         return validation_response
 
@@ -53,7 +53,7 @@ def upload_job():
     )
     job = Job.query.filter_by(job_name=request.json["job_name"]).first()
     event_names_found_in_db = UploadJobValidations.get_events_from_db_per_event_names(
-        Event, request.json["event_names"]
+        request.json["event_names"]
     )
     for event in event_names_found_in_db:
         add_entry(JobInEvent(job, event), db)

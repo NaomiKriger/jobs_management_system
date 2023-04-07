@@ -4,7 +4,7 @@ from typing import Optional
 from flask import Response, make_response, request
 
 from database import read_table
-from models import Job
+from models import Event, Job
 
 MAP_TYPES_TO_NAMES = {str: "string", int: "integer", list: "list", dict: "json"}
 
@@ -12,9 +12,7 @@ MAP_TYPES_TO_NAMES = {str: "string", int: "integer", list: "list", dict: "json"}
 # TODO: could probably be validated with JSON schemas
 
 
-def validate_input_type(
-    param_name: str, param_value, param_expected_type
-) -> Optional[Response]:
+def validate_input_type(param_name: str, param_value, param_expected_type) -> Optional[Response]:
     if not isinstance(param_value, param_expected_type):
         return make_response(
             f"{param_name} type should be a {MAP_TYPES_TO_NAMES[param_expected_type]}. "
@@ -23,7 +21,7 @@ def validate_input_type(
         )
 
 
-def configure_new_event_validations(event_model) -> Optional[Response]:
+def configure_new_event_validations() -> Optional[Response]:
     try:
         event_name = request.json["event_name"]
         schema = request.json["schema"]
@@ -35,7 +33,7 @@ def configure_new_event_validations(event_model) -> Optional[Response]:
     if not isinstance(schema, dict):
         return make_response("schema should be a json", BAD_REQUEST)
 
-    event_names = {event.event_name for event in read_table(event_model)}
+    event_names = {event.event_name for event in read_table(Event)}
     if event_name in event_names:
         return make_response(f"event {event_name} already exists", BAD_REQUEST)
 
@@ -61,8 +59,8 @@ class UploadJobValidations:
             )
 
     @staticmethod
-    def get_events_from_db_per_event_names(event_model, event_names: set) -> set:
-        events = read_table(event_model)
+    def get_events_from_db_per_event_names(event_names: set) -> set:
+        events = read_table(Event)
         events_to_return = set()
         for event in events:
             if event.event_name in event_names:
@@ -87,48 +85,36 @@ class UploadJobValidations:
             )
 
     @staticmethod
-    def validate_upload_job(event_model) -> Optional[Response]:
+    def validate_upload_job() -> Optional[Response]:
         params = {}
-        params_pull_response = UploadJobValidations.pull_parameters_if_not_missing(
-            params
-        )
+        params_pull_response = UploadJobValidations.pull_parameters_if_not_missing(params)
         if isinstance(params_pull_response, Response):
             return params_pull_response
 
-        empty_parameter_validation_response = (
-            UploadJobValidations.validate_empty_parameter(params)
-        )
+        empty_parameter_validation_response = (UploadJobValidations.validate_empty_parameter(params))
         if empty_parameter_validation_response:
             return empty_parameter_validation_response
 
         for param_name in params.keys():
-            response = validate_input_type(
+            input_type_validation_response = validate_input_type(
                 param_name, params[param_name]["value"], params[param_name]["type"]
             )
-            if response:
-                return response
+            if input_type_validation_response:
+                return input_type_validation_response
 
-        job_name_already_exists = Job.query.filter_by(
-            job_name=params["job_name"]["value"]
-        ).first()
+        job_name_already_exists = Job.query.filter_by(job_name=params["job_name"]["value"]).first()
 
         if job_name_already_exists:
-            return make_response(
-                f"Job name {params['job_name']['value']} already exists", BAD_REQUEST
-            )
+            return make_response(f"Job name {params['job_name']['value']} already exists", BAD_REQUEST)
 
-        event_names_found_in_db = event_model.query.filter(
-            event_model.event_name.in_(params["event_names"]["value"])
-        ).all()
+        event_names_found_in_db = Event.query.filter(
+            Event.event_name.in_(params["event_names"]["value"])).all()
         if not event_names_found_in_db:
-            return make_response(
-                "Non of the provided event names was found in DB", BAD_REQUEST
-            )
-        else:
-            events_not_in_db = set(params["event_names"]["value"]) - set(
-                event.event_name for event in event_names_found_in_db
-            )
-            notes = []
+            return make_response("Non of the provided event names was found in DB", BAD_REQUEST)
+
+        events_not_in_db = set(params["event_names"]["value"]) - \
+                           set(event.event_name for event in event_names_found_in_db)
+        notes = []
         if events_not_in_db:
             notes.append(
                 f"the following event names were not found in DB and therefore "
