@@ -5,8 +5,7 @@ from dotenv import load_dotenv
 from flask import Flask, make_response, request
 
 from app_handlers import upload_job_to_container_registry
-from app_validations import (UploadJobValidations,
-                             configure_new_event_validations)
+from app_validations import UploadJobValidations, configure_new_event_validations
 from consts import Endpoint
 from database import add_entry
 from models import Event, Job, JobInEvent, db
@@ -57,7 +56,9 @@ def upload_job():
     )
     for event in event_names_found_in_db:
         add_entry(JobInEvent(job, event), db)
-    return {"message": f"{upload_job.__name__} is executed. {validation_response.get_data().decode('utf-8')}"}
+    return {
+        "message": f"{upload_job.__name__} finished successfully. {validation_response.get_data().decode('utf-8')}"
+    }
 
 
 @app.route("/execute_jobs_by_event", methods=["POST"])
