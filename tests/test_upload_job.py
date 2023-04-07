@@ -15,39 +15,11 @@ def test_valid_input(test_client):
     pass
 
 
-def test_invalid_job_name(test_client):
-    data = {
-        "job_name": "my_job",
-        "event_names": ["event_1", "event_2"],
-        "schema": basic_schema_mock,
-        "job_logic": "TBD",
-        "expiration_days": 365,
-    }
-
+class TestInvalidJobName:
     """
     scenarios left to implement: job_name already exists
     """
 
-    data["job_name"] = ""
-    response = test_client.post(Endpoint.UPLOAD_JOB.value, json=data)
-    assert response.status_code == BAD_REQUEST
-    assert response.text == f"some required parameters are missing: ['job_name']"
-
-    data["job_name"] = 123
-    response = test_client.post(Endpoint.UPLOAD_JOB.value, json=data)
-    assert response.status_code == BAD_REQUEST
-    assert (
-        response.text
-        == f"job_name type should be a string. job_name provided is {data.get('job_name')}"
-    )
-
-    data.pop("job_name")
-    response = test_client.post(Endpoint.UPLOAD_JOB.value, json=data)
-    assert response.status_code == BAD_REQUEST
-    assert response.text == "missing required parameter: job_name"
-
-
-def test_invalid_event_names(test_client):
     data = {
         "job_name": "my_job",
         "event_names": ["event_1", "event_2"],
@@ -56,45 +28,75 @@ def test_invalid_event_names(test_client):
         "expiration_days": 365,
     }
 
+    def test_missing_job_name(self, test_client):
+        self.data["job_name"] = ""
+        response = test_client.post(Endpoint.UPLOAD_JOB.value, json=self.data)
+        assert response.status_code == BAD_REQUEST
+        assert response.text == f"some required parameters are missing: ['job_name']"
+
+    def test_job_name_of_invalid_type(self, test_client):
+        self.data["job_name"] = 123
+        response = test_client.post(Endpoint.UPLOAD_JOB.value, json=self.data)
+        assert response.status_code == BAD_REQUEST
+        assert (
+            response.text
+            == f"job_name type should be a string. job_name provided is {self.data.get('job_name')}"
+        )
+
+    def test_no_job_name_parameter_provided(self, test_client):
+        self.data.pop("job_name")
+        response = test_client.post(Endpoint.UPLOAD_JOB.value, json=self.data)
+        assert response.status_code == BAD_REQUEST
+        assert response.text == "missing required parameter: job_name"
+
+
+class TestInvalidEventNames:
     """
-    scenarios left to implement: event names in list are not strings,
-    at least one event name is not in DB
+    scenarios left to implement: event names in list are not strings
     """
 
-    # empty event names
-    data["event_names"] = []
-    response = test_client.post(Endpoint.UPLOAD_JOB.value, json=data)
-    assert response.status_code == BAD_REQUEST
-    assert response.text == f"some required parameters are missing: ['event_names']"
+    data = {
+        "job_name": "my_job",
+        "event_names": ["event_1", "event_2"],
+        "schema": basic_schema_mock,
+        "job_logic": "TBD",
+        "expiration_days": 365,
+    }
 
-    # event name type is invalid
-    data["event_names"] = 123
-    response = test_client.post(Endpoint.UPLOAD_JOB.value, json=data)
-    assert response.status_code == BAD_REQUEST
-    assert (
-        response.text
-        == f"event_names type should be a list. event_names provided is {data.get('event_names')}"
-    )
+    def test_empty_event_names(self, test_client):
+        self.data["event_names"] = []
+        response = test_client.post(Endpoint.UPLOAD_JOB.value, json=self.data)
+        assert response.status_code == BAD_REQUEST
+        assert response.text == f"some required parameters are missing: ['event_names']"
 
-    # no event names
-    data.pop("event_names")
-    response = test_client.post(Endpoint.UPLOAD_JOB.value, json=data)
-    assert response.status_code == BAD_REQUEST
-    assert response.text == "missing required parameter: event_names"
-    data["event_names"] = ["event_1", "event_2"]
+    def test_event_names_type_is_invalid(self, test_client):
+        self.data["event_names"] = 123
+        response = test_client.post(Endpoint.UPLOAD_JOB.value, json=self.data)
+        assert response.status_code == BAD_REQUEST
+        assert (
+            response.text
+            == f"event_names type should be a list. event_names provided is {self.data.get('event_names')}"
+        )
 
-    # non of the event names is found in DB
-    response = test_client.post(Endpoint.UPLOAD_JOB.value, json=data)
-    assert response.status_code == BAD_REQUEST
-    assert response.text == "Non of the provided event names was found in DB"
+    def test_no_event_names(self, test_client):
+        self.data.pop("event_names")
+        response = test_client.post(Endpoint.UPLOAD_JOB.value, json=self.data)
+        assert response.status_code == BAD_REQUEST
+        assert response.text == "missing required parameter: event_names"
+        self.data["event_names"] = ["event_1", "event_2"]
 
-    # at least one event name is not found in DB
-    data["event_names"] = ["test_event_1", "test_event_2"]
-    response = test_client.post(Endpoint.UPLOAD_JOB.value, json=data)
-    assert response.text == (
-        'Job uploaded. Notes:["the following event names were not found in DB and '
-        "therefore the job wasn't connected to them: {'test_event_2'}\"]"
-    )
+    def test_non_of_event_names_is_found_in_db(self, test_client):
+        response = test_client.post(Endpoint.UPLOAD_JOB.value, json=self.data)
+        assert response.status_code == BAD_REQUEST
+        assert response.text == "Non of the provided event names was found in DB"
+
+    def test_at_least_one_of_event_names_is_not_found_in_db(self, test_client):
+        self.data["event_names"] = ["test_event_1", "test_event_2"]
+        response = test_client.post(Endpoint.UPLOAD_JOB.value, json=self.data)
+        assert (
+            response.data
+            == b'{"message":"upload_job finished successfully. Job uploaded. Notes:[\\"the following event names were not found in DB and therefore the job wasn\'t connected to them: {\'test_event_2\'}\\"]"}\n'
+        )
 
 
 @unittest.skip("Not implemented")
