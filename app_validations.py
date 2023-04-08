@@ -83,7 +83,11 @@ class UploadJobValidations:
         if isinstance(params_pull_response, Response):
             return params_pull_response
 
-        empty_parameter_validation_response = (UploadJobValidations.validate_empty_parameter(params))
+        params_excluding_schema = params.copy()
+        params_excluding_schema.pop("schema")
+        empty_parameter_validation_response = (
+            UploadJobValidations.validate_empty_parameter(params_excluding_schema)
+        )
         if empty_parameter_validation_response:
             return empty_parameter_validation_response
 
