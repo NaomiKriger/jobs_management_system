@@ -53,8 +53,8 @@ class TestInvalidJobName:
         response = test_client.post(Endpoint.UPLOAD_JOB.value, json=self.data)
         assert response.status_code == BAD_REQUEST
         assert (
-            response.text
-            == f"job_name type should be a string. job_name provided is {self.data.get('job_name')}"
+                response.text
+                == f"job_name type should be string. job_name provided is {self.data.get('job_name')}"
         )
 
     def test_no_job_name_parameter_provided(self, test_client):
@@ -97,8 +97,8 @@ class TestInvalidEventNames:
         response = test_client.post(Endpoint.UPLOAD_JOB.value, json=self.data)
         assert response.status_code == BAD_REQUEST
         assert (
-            response.text
-            == f"event_names type should be a list. event_names provided is {self.data.get('event_names')}"
+                response.text
+                == f"event_names type should be list. event_names provided is {self.data.get('event_names')}"
         )
 
     def test_no_event_names(self, test_client):
@@ -115,7 +115,7 @@ class TestInvalidEventNames:
         assert response.text == "Non of the provided event names was found in DB"
 
     def test_one_event_found_in_db_and_one_event_is_not_found(self, test_client):
-        self.data["job_name"] = "test_job_2"   # test_event_1 pre-configured in DB in conftest.py
+        self.data["job_name"] = "test_job_2"  # test_event_1 pre-configured in DB in conftest.py
         self.data["event_names"] = ["test_event_1", "test_event_2"]
         response = test_client.post(Endpoint.UPLOAD_JOB.value, json=self.data)
         job = Job.query.filter_by(job_name=self.data["job_name"]).first()
@@ -149,9 +149,36 @@ def test_invalid_job_type(test_client):
     pass
 
 
-@unittest.skip("Not implemented")
 def test_invalid_expiration_days(test_client):
-    """
-    scenarios: expiration days is not a non-negative integer
-    """
-    pass
+    data = {
+        "job_name": "my_job",
+        "event_names": ["test_event_1"],
+        "schema": basic_schema_mock,
+        "job_logic": "TBD",
+        "expiration_days": "a",
+    }
+    response = test_client.post(Endpoint.UPLOAD_JOB.value, json=data)
+    assert response.status_code == BAD_REQUEST
+    assert (
+            response.text
+            == f"expiration_days type should be integer. expiration_days provided is {data.get('expiration_days')}"
+    )
+
+    data["expiration_days"] = 0
+    response = test_client.post(Endpoint.UPLOAD_JOB.value, json=data)
+    assert response.status_code == BAD_REQUEST
+    assert (
+            response.text
+            == f"Expiration days should be greater than or equal to 1. "
+               f"Expiration days value = {data.get('expiration_days')}"
+    )
+
+    data["expiration_days"] = ""
+    response = test_client.post(Endpoint.UPLOAD_JOB.value, json=data)
+    assert response.status_code == BAD_REQUEST
+    assert response.text == "some required parameters are missing: ['expiration_days']"
+
+    data.pop("expiration_days")
+    response = test_client.post(Endpoint.UPLOAD_JOB.value, json=data)
+    assert response.status_code == BAD_REQUEST
+    assert response.text == "missing required parameter: expiration_days"

@@ -15,7 +15,7 @@ MAP_TYPES_TO_NAMES = {str: "string", int: "integer", list: "list", dict: "json"}
 def validate_input_type(param_name: str, param_value, param_expected_type) -> Optional[Response]:
     if not isinstance(param_value, param_expected_type):
         return make_response(
-            f"{param_name} type should be a {MAP_TYPES_TO_NAMES[param_expected_type]}. "
+            f"{param_name} type should be {MAP_TYPES_TO_NAMES[param_expected_type]}. "
             f"{param_name} provided is {param_value}",
             BAD_REQUEST,
         )
@@ -42,20 +42,12 @@ class UploadJobValidations:
     @staticmethod
     def validate_empty_parameter(params: dict) -> Optional[Response]:
         empty_arguments = []
-        for key, value in params.items():
-            if not value["value"]:
-                empty_arguments.append(key)
+        for param_name, param_attribute in params.items():
+            if not param_attribute["value"] and param_attribute["value"] != 0:
+                empty_arguments.append(param_name)
         if empty_arguments:
             return make_response(
                 f"some required parameters are missing: {empty_arguments}", BAD_REQUEST
-            )
-
-    @staticmethod
-    def validate_event_names(event_names: list) -> Optional[Response]:
-        if not isinstance(event_names, list):
-            return make_response(
-                f"event_names type should be a list. event_names provided is {event_names}",
-                BAD_REQUEST,
             )
 
     @staticmethod
@@ -101,6 +93,9 @@ class UploadJobValidations:
             )
             if input_type_validation_response:
                 return input_type_validation_response
+        if params["expiration_days"]["value"] <= 0:
+            return make_response(f"Expiration days should be greater than or equal to 1. "
+                                 f"Expiration days value = {params['expiration_days']['value']}", BAD_REQUEST)
 
         job_name_already_exists = Job.query.filter_by(job_name=params["job_name"]["value"]).first()
 
@@ -112,8 +107,8 @@ class UploadJobValidations:
         if not event_names_found_in_db:
             return make_response("Non of the provided event names was found in DB", BAD_REQUEST)
 
-        events_not_in_db = set(params["event_names"]["value"]) - \
-                           set(event.event_name for event in event_names_found_in_db)
+        events_not_in_db = set(params["event_names"]["value"]) - set(
+            event.event_name for event in event_names_found_in_db)
         notes = []
         if events_not_in_db:
             notes.append(
