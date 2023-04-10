@@ -4,3 +4,4 @@ __pycache__/
 .pytest_cache
 tests/.pytest_cache
 .env
+git_ignored
