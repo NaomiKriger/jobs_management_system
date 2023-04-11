@@ -32,6 +32,7 @@ def run():
             if len(dict_to_update[source_name]) >= 10:
                 break
     versions_and_sources.update(dict_to_update)
+    print(versions_and_sources)
     return versions_and_sources
 
 
