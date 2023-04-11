@@ -6,15 +6,12 @@ from bs4 import BeautifulSoup
 
 versions_and_sources = {}
 
+parser = argparse.ArgumentParser()
+parser.add_argument("--source_name", required=True, help="source name")
+parser.add_argument("--url", required=True, help="url")
 
-def run():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--source_name", required=True, help="source name")
-    parser.add_argument("--url", required=True, help="url")
-    args = parser.parse_args()
 
-    source_name = args.source_name
-    url = args.url
+def main(source_name, url):
     if not source_name or not url or not isinstance(source_name, str) or not isinstance(url, str):
         return {}
 
@@ -36,4 +33,5 @@ def run():
     return versions_and_sources
 
 
-run()
+if __name__ == "__main__":
+    main(**vars(parser.parse_args()))
