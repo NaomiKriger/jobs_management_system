@@ -41,16 +41,19 @@ def get_execution_flags(execution_parameters: dict) -> list:
     return flags
 
 
-def get_execution_command(execution_parameters, image_tag):
-    flags = get_execution_flags(execution_parameters)
+def get_execution_command():
     ecr_path = os.getenv("ECR_PATH")
     repository_name = os.getenv("ECR_REPOSITORY_NAME")
+    image_tag = request.json.get("image_tag")
+    executable_file_name = request.json.get("executable_file_name")
+
     cmd = [
         "docker",
         "run",
         f"{ecr_path}/{repository_name}:{image_tag}",
         "python",
-        "job_1.py",
+        f"{executable_file_name}",
     ]
-    cmd += flags
+    cmd += get_execution_flags(request.json.get("execution_parameters"))
+
     return cmd

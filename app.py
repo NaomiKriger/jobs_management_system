@@ -62,10 +62,8 @@ def execute_jobs_by_event():
 @app.route("/execute_job_by_image_tag", methods=["POST"])
 def execute_job_by_image_tag():
     ecr_login()
-    image_tag = request.json.get("image_tag")
-    execution_parameters = request.json.get("execution_parameters")
     result = subprocess.run(
-        get_execution_command(execution_parameters, image_tag),
+        get_execution_command(),
         capture_output=True,
         text=True,
     )
