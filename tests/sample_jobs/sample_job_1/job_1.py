@@ -1,18 +1,20 @@
+import argparse
+
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
-from flask import Flask, request
-
-app = Flask(__name__)
 
 versions_and_sources = {}
 
 
-@app.route("/scrape_versions_and_sources_from_table", methods=["POST"])
-def scrape_versions_and_sources_from_table() -> dict:
-    data = request.values.to_dict() if request.values else request.get_json()
-    source_name = data.get("source_name")
-    url = data.get("url")
+def run():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--source_name", required=True, help="source name")
+    parser.add_argument("--url", required=True, help="url")
+    args = parser.parse_args()
+
+    source_name = args.source_name
+    url = args.url
     if not source_name or not url or not isinstance(source_name, str) or not isinstance(url, str):
         return {}
 
@@ -33,5 +35,4 @@ def scrape_versions_and_sources_from_table() -> dict:
     return versions_and_sources
 
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+run()
