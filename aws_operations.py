@@ -1,15 +1,25 @@
 import os
-import subprocess
+from datetime import datetime
+
+import boto3
+
+DATETIME_FORMAT = "%m/%d/%Y, %H:%M:%S"
 
 
 def ecr_login():
-    aws_region = os.getenv("AWS_REGION")
-    ecr_repository = os.getenv("ECR_PATH") + "/" + os.getenv("ECR_REPOSITORY_NAME")
+    token = os.environ.get("ECR_LOGIN_TOKEN")
+    expiration_time = os.environ.get("ECR_LOGIN_TOKEN_EXPIRATION_TIME")
+    if expiration_time:
+        expiration_time = datetime.strptime(expiration_time, DATETIME_FORMAT)
 
-    aws_login_cmd = f"aws ecr get-login-password --region {aws_region}"
-    ecr_login_cmd = f"docker login --username AWS --password-stdin {ecr_repository}"
+    if token and expiration_time and datetime.now() < expiration_time:  # token is still valid
+        return
 
-    aws_login_output = subprocess.check_output(aws_login_cmd, shell=True)
-    subprocess.check_call(
-        f"echo {aws_login_output.decode()} | {ecr_login_cmd}", shell=True
-    )
+    ecr_client = boto3.client("ecr")
+    response = ecr_client.get_authorization_token()
+    token = response["authorizationData"][0]["authorizationToken"]
+    expiration_time = response["authorizationData"][0]["expiresAt"]
+
+    # cache the token
+    os.environ["ECR_LOGIN_TOKEN"] = token
+    os.environ["ECR_LOGIN_TOKEN_EXPIRATION_TIME"] = expiration_time.strftime(DATETIME_FORMAT)
