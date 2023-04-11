@@ -2,39 +2,34 @@ import os
 
 from flask import request
 
-from app_validations import UploadJobValidations
+from app_validations import ConfigureJobValidations
 from database import add_entry
-from models import Job, JobInEvent
+from models import Event, Job, JobInEvent
 
 
-def upload_job_to_container_registry(job):
-    return "ecr_path"
-
-
-def add_job_entry(job_path, db):
+def add_job_entry(db):
+    events_found_in_db = Event.query.filter(
+        Event.event_name.in_(request.json["event_names"])).all()
+    events_to_connect = [event.event_name for event in events_found_in_db]
     add_entry(
-        Job(
-            request.json["job_name"],
-            request.json["schema"],
-            request.json["event_names"],
-            job_path,
-            request.json["expiration_days"],
-        ),
+        Job(request.json["image_tag"], request.json["schema"], events_to_connect,
+            request.json["expiration_days"]),
         db,
     )
 
 
 def add_job_to_job_in_event(db):
-    job = Job.query.filter_by(job_name=request.json["job_name"]).first()
-    event_names_found_in_db = UploadJobValidations.get_events_from_db_per_event_names(
+    job = Job.query.filter_by(image_tag=request.json["image_tag"]).first()
+    event_names_found_in_db = ConfigureJobValidations.get_events_from_db_per_event_names(
         request.json["event_names"]
     )
     for event in event_names_found_in_db:
         add_entry(JobInEvent(job, event), db)
 
 
-def get_execution_flags(execution_parameters: dict) -> list:
+def get_execution_flags() -> list:
     flags = []
+    execution_parameters = request.json.get("execution_parameters")
     for key, value in execution_parameters.items():
         flags.append(f"--{key}")
         flags.append(str(value))
@@ -54,6 +49,6 @@ def get_execution_command():
         "python",
         f"{executable_file_name}",
     ]
-    cmd += get_execution_flags(request.json.get("execution_parameters"))
+    cmd += get_execution_flags()
 
     return cmd

@@ -23,19 +23,15 @@ class Job(db.Model):
     __tablename__ = "job"
 
     id = db.Column(db.Integer, primary_key=True)
-    job_name = db.Column(db.String(80), unique=True, nullable=False)
+    image_tag = db.Column(db.String(80), unique=True, nullable=False)
     schema = db.Column(JSON, nullable=False)
     event_names = db.Column(db.String(80), nullable=False)  # TODO: list of string
-    path_to_job_content = db.Column(db.String(80), nullable=False)  # TODO: ECR path
     expiration_days = db.Column(db.Integer)
 
-    def __init__(
-        self, job_name, schema, event_names, path_to_job_content, expiration_days
-    ):
-        self.job_name = job_name
+    def __init__(self, image_tag, schema, event_names, expiration_days):
+        self.image_tag = image_tag
         self.schema = schema
         self.event_names = event_names
-        self.path_to_job_content = path_to_job_content
         self.expiration_days = expiration_days
 
     def __repr__(self):

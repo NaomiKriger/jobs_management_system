@@ -38,7 +38,7 @@ def configure_new_event_validations() -> Optional[Response]:
         return make_response(f"event {event_name} already exists", BAD_REQUEST)
 
 
-class UploadJobValidations:
+class ConfigureJobValidations:
     @staticmethod
     def validate_empty_parameter(params: dict) -> Optional[Response]:
         empty_arguments = []
@@ -62,10 +62,9 @@ class UploadJobValidations:
     @staticmethod
     def pull_parameters_if_not_missing(params) -> Optional[Response]:
         param_to_type = [
-            ("job_name", str),
+            ("image_tag", str),
             ("event_names", list),
             ("schema", dict),
-            ("job_logic", str),
             ("expiration_days", int),
         ]
         try:
@@ -77,16 +76,16 @@ class UploadJobValidations:
             )
 
     @staticmethod
-    def validate_upload_job() -> Optional[Response]:
+    def validate_job_parameters() -> Optional[Response]:
         params = {}
-        params_pull_response = UploadJobValidations.pull_parameters_if_not_missing(params)
+        params_pull_response = ConfigureJobValidations.pull_parameters_if_not_missing(params)
         if isinstance(params_pull_response, Response):
             return params_pull_response
 
         params_excluding_schema = params.copy()
         params_excluding_schema.pop("schema")
         empty_parameter_validation_response = (
-            UploadJobValidations.validate_empty_parameter(params_excluding_schema)
+            ConfigureJobValidations.validate_empty_parameter(params_excluding_schema)
         )
         if empty_parameter_validation_response:
             return empty_parameter_validation_response
@@ -101,10 +100,10 @@ class UploadJobValidations:
             return make_response(f"Expiration days should be greater than or equal to 1. "
                                  f"Expiration days value = {params['expiration_days']['value']}", BAD_REQUEST)
 
-        job_name_already_exists = Job.query.filter_by(job_name=params["job_name"]["value"]).first()
+        image_tag_already_exists = Job.query.filter_by(image_tag=params["image_tag"]["value"]).first()
 
-        if job_name_already_exists:
-            return make_response(f"Job name {params['job_name']['value']} already exists", BAD_REQUEST)
+        if image_tag_already_exists:
+            return make_response(f"Image tag {params['image_tag']['value']} already exists", BAD_REQUEST)
 
         event_names_found_in_db = Event.query.filter(
             Event.event_name.in_(params["event_names"]["value"])).all()
@@ -119,4 +118,4 @@ class UploadJobValidations:
                 f"the following event names were not found in DB and therefore "
                 f"the job wasn't connected to them: {events_not_in_db}"
             )
-        return make_response(f"Job uploaded. Notes:{notes}", OK)
+        return make_response(f"Job configured. Notes:{notes}", OK)

@@ -6,9 +6,8 @@ from dotenv import load_dotenv
 from flask import Flask, make_response, request
 
 from app_helpers import (add_job_entry, add_job_to_job_in_event,
-                         get_execution_command,
-                         upload_job_to_container_registry)
-from app_validations import (UploadJobValidations,
+                         get_execution_command)
+from app_validations import (ConfigureJobValidations,
                              configure_new_event_validations)
 from aws_operations import ecr_login
 from consts import Endpoint
@@ -38,18 +37,17 @@ def configure_new_event():
     return make_response(f"event {event_name} added to the DB", OK)
 
 
-@app.route(Endpoint.UPLOAD_JOB.value, methods=["POST"])
-def upload_job():
-    validation_response = UploadJobValidations.validate_upload_job()
+@app.route(Endpoint.CONFIGURE_NEW_JOB.value, methods=["POST"])
+def configure_new_job():
+    validation_response = ConfigureJobValidations.validate_job_parameters()
     if validation_response.status_code != OK:
         return validation_response
 
-    job_path = upload_job_to_container_registry(request.json["job_logic"])
-    add_job_entry(job_path, db)
+    add_job_entry(db)
     add_job_to_job_in_event(db)
 
     return make_response(
-        f"{upload_job.__name__} finished successfully. {validation_response.get_data().decode('utf-8')}",
+        f"{configure_new_job.__name__} finished successfully. {validation_response.get_data().decode('utf-8')}",
         OK,
     )
 
