@@ -1,3 +1,5 @@
+import os
+
 from flask import request
 
 from app_validations import UploadJobValidations
@@ -29,3 +31,26 @@ def add_job_to_job_in_event(db):
     )
     for event in event_names_found_in_db:
         add_entry(JobInEvent(job, event), db)
+
+
+def get_execution_flags(execution_parameters: dict) -> list:
+    flags = []
+    for key, value in execution_parameters.items():
+        flags.append(f"--{key}")
+        flags.append(str(value))
+    return flags
+
+
+def get_execution_command(execution_parameters, image_tag):
+    flags = get_execution_flags(execution_parameters)
+    ecr_path = os.getenv("ECR_PATH")
+    repository_name = os.getenv("ECR_REPOSITORY_NAME")
+    cmd = [
+        "docker",
+        "run",
+        f"{ecr_path}/{repository_name}:{image_tag}",
+        "python",
+        "job_1.py",
+    ]
+    cmd += flags
+    return cmd

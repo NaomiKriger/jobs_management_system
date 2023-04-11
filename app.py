@@ -1,13 +1,16 @@
 import os
+import subprocess
 from http.client import OK
 
 from dotenv import load_dotenv
 from flask import Flask, make_response, request
 
 from app_helpers import (add_job_entry, add_job_to_job_in_event,
+                         get_execution_command,
                          upload_job_to_container_registry)
 from app_validations import (UploadJobValidations,
                              configure_new_event_validations)
+from aws_operations import ecr_login
 from consts import Endpoint
 from database import add_entry
 from models import Event, db
@@ -56,9 +59,18 @@ def execute_jobs_by_event():
     return {"message": f"{execute_jobs_by_event.__name__} is executed"}
 
 
-@app.route("/execute_job_by_id", methods=["POST"])
-def execute_job_by_id():
-    return {"message": f"{execute_job_by_id.__name__} is executed"}
+@app.route("/execute_job_by_image_tag", methods=["POST"])
+def execute_job_by_image_tag():
+    ecr_login()
+    image_tag = request.json.get("image_tag")
+    execution_parameters = request.json.get("execution_parameters")
+    result = subprocess.run(
+        get_execution_command(execution_parameters, image_tag),
+        capture_output=True,
+        text=True,
+    )
+
+    return {"output": result.stdout, "error": result.stderr}
 
 
 @app.route("/view_event_metadata", methods=["GET"])
