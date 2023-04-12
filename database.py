@@ -1,7 +1,12 @@
-def add_entry(entry, db):
-    db.session.add(entry)
-    db.session.commit()
+from flask_sqlalchemy import SQLAlchemy
+
+db = SQLAlchemy()
 
 
-def read_table(model):
-    return model.query.all()
+def add_entry(entry, db_instance):
+    db_instance.session.add(entry)
+    db_instance.session.commit()
+
+
+def read_table(table_name):
+    return table_name.query.all()

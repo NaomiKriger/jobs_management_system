@@ -4,7 +4,9 @@ from flask import request
 
 from app_validations import ConfigureJobValidations
 from database import add_entry
-from models import Event, Job, JobInEvent
+from models.event import Event
+from models.job import Job
+from models.job_in_event import JobInEvent
 
 
 def add_job_entry(db):

@@ -4,7 +4,8 @@ from typing import Optional
 from flask import Response, make_response, request
 
 from database import read_table
-from models import Event, Job
+from models.event import Event
+from models.job import Job
 
 MAP_TYPES_TO_NAMES = {str: "string", int: "integer", list: "list", dict: "json"}
 

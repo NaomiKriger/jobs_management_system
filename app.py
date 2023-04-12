@@ -11,8 +11,8 @@ from app_validations import (ConfigureJobValidations,
                              configure_new_event_validations)
 from aws_operations import ecr_login
 from consts import Endpoint
-from database import add_entry
-from models import Event, db
+from database import add_entry, db
+from models.event import Event
 
 load_dotenv()
 app = Flask(__name__)

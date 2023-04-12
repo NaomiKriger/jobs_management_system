@@ -1,7 +1,7 @@
 from http.client import BAD_REQUEST, OK
 
 from consts import Endpoint
-from models import Event
+from models.event import Event
 from tests.mocks import basic_schema_mock
 
 
