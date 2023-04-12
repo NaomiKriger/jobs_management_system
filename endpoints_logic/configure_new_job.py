@@ -3,40 +3,24 @@ from typing import Optional
 
 from flask import Response, make_response, request
 
-from database import read_table
+from consts import Endpoint
+from database import add_entry, db, read_table
 from models.event import Event
 from models.job import Job
+from models.job_in_event import JobInEvent
 
 MAP_TYPES_TO_NAMES = {str: "string", int: "integer", list: "list", dict: "json"}
 
 
-# TODO: could probably be validated with JSON schemas
-
-
-def validate_input_type(param_name: str, param_value, param_expected_type) -> Optional[Response]:
+def validate_input_type(
+    param_name: str, param_value, param_expected_type
+) -> Optional[Response]:
     if not isinstance(param_value, param_expected_type):
         return make_response(
             f"{param_name} type should be {MAP_TYPES_TO_NAMES[param_expected_type]}. "
             f"{param_name} provided is {param_value}",
             BAD_REQUEST,
         )
-
-
-def validate_configure_new_event() -> Optional[Response]:
-    try:
-        event_name = request.json["event_name"]
-        schema = request.json["schema"]
-    except KeyError as e:
-        return make_response(f"missing required parameter: {e.args[0]}", BAD_REQUEST)
-
-    if not isinstance(event_name, str):
-        return make_response("event_name should be a string", BAD_REQUEST)
-    if not isinstance(schema, dict):
-        return make_response("schema should be a json", BAD_REQUEST)
-
-    event_names = {event.event_name for event in read_table(Event)}
-    if event_name in event_names:
-        return make_response(f"event {event_name} already exists", BAD_REQUEST)
 
 
 class ConfigureJobValidations:
@@ -61,7 +45,7 @@ class ConfigureJobValidations:
         return events_to_return
 
     @staticmethod
-    def pull_parameters_if_not_missing(params) -> Optional[Response]:
+    def _pull_parameters_if_not_missing(params) -> Optional[Response]:
         param_to_type = [
             ("image_tag", str),
             ("event_names", list),
@@ -70,7 +54,10 @@ class ConfigureJobValidations:
         ]
         try:
             for param_name, param_type in param_to_type:
-                params[param_name] = {"value": request.json[param_name], "type": param_type}
+                params[param_name] = {
+                    "value": request.json[param_name],
+                    "type": param_type,
+                }
         except KeyError as e:
             return make_response(
                 f"missing required parameter: {e.args[0]}", BAD_REQUEST
@@ -79,7 +66,9 @@ class ConfigureJobValidations:
     @staticmethod
     def validate_job_parameters() -> Optional[Response]:
         params = {}
-        params_pull_response = ConfigureJobValidations.pull_parameters_if_not_missing(params)
+        params_pull_response = ConfigureJobValidations._pull_parameters_if_not_missing(
+            params
+        )
         if isinstance(params_pull_response, Response):
             return params_pull_response
 
@@ -98,21 +87,32 @@ class ConfigureJobValidations:
             if input_type_validation_response:
                 return input_type_validation_response
         if params["expiration_days"]["value"] <= 0:
-            return make_response(f"Expiration days should be greater than or equal to 1. "
-                                 f"Expiration days value = {params['expiration_days']['value']}", BAD_REQUEST)
+            return make_response(
+                f"Expiration days should be greater than or equal to 1. "
+                f"Expiration days value = {params['expiration_days']['value']}",
+                BAD_REQUEST,
+            )
 
-        image_tag_already_exists = Job.query.filter_by(image_tag=params["image_tag"]["value"]).first()
+        image_tag_already_exists = Job.query.filter_by(
+            image_tag=params["image_tag"]["value"]
+        ).first()
 
         if image_tag_already_exists:
-            return make_response(f"Image tag {params['image_tag']['value']} already exists", BAD_REQUEST)
+            return make_response(
+                f"Image tag {params['image_tag']['value']} already exists", BAD_REQUEST
+            )
 
         event_names_found_in_db = Event.query.filter(
-            Event.event_name.in_(params["event_names"]["value"])).all()
+            Event.event_name.in_(params["event_names"]["value"])
+        ).all()
         if not event_names_found_in_db:
-            return make_response("Non of the provided event names was found in DB", BAD_REQUEST)
+            return make_response(
+                "Non of the provided event names was found in DB", BAD_REQUEST
+            )
 
         events_not_in_db = set(params["event_names"]["value"]) - set(
-            event.event_name for event in event_names_found_in_db)
+            event.event_name for event in event_names_found_in_db
+        )
         notes = []
         if events_not_in_db:
             notes.append(
@@ -120,3 +120,45 @@ class ConfigureJobValidations:
                 f"the job wasn't connected to them: {list(events_not_in_db)}"
             )
         return make_response(f"Job configured. Notes:{notes}", OK)
+
+
+def add_record_to_job_table():
+    events_found_in_db = Event.query.filter(
+        Event.event_name.in_(request.json["event_names"])
+    ).all()
+    events_to_connect = [event.event_name for event in events_found_in_db]
+    add_entry(
+        Job(
+            request.json["image_tag"],
+            request.json["schema"],
+            events_to_connect,
+            request.json["expiration_days"],
+        ),
+        db,
+    )
+
+
+def add_record_to_job_in_event_table():
+    job = Job.query.filter_by(image_tag=request.json["image_tag"]).first()
+    event_names_found_in_db = (
+        ConfigureJobValidations.get_events_from_db_per_event_names(
+            request.json["event_names"]
+        )
+    )
+    for event in event_names_found_in_db:
+        add_entry(JobInEvent(job, event), db)
+
+
+def configure_new_job_response():
+    validation_response = ConfigureJobValidations.validate_job_parameters()
+    if validation_response.status_code != OK:
+        return validation_response
+
+    add_record_to_job_table()
+    add_record_to_job_in_event_table()
+
+    return make_response(
+        f"{Endpoint.CONFIGURE_NEW_JOB.value[1:]} finished successfully. "
+        f"{validation_response.get_data().decode('utf-8')}",
+        OK,
+    )
