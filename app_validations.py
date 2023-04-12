@@ -116,6 +116,6 @@ class ConfigureJobValidations:
         if events_not_in_db:
             notes.append(
                 f"the following event names were not found in DB and therefore "
-                f"the job wasn't connected to them: {events_not_in_db}"
+                f"the job wasn't connected to them: {list(events_not_in_db)}"
             )
         return make_response(f"Job configured. Notes:{notes}", OK)

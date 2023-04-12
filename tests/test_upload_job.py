@@ -114,12 +114,13 @@ class TestInvalidEventNames:
         assert response.text == (
             'configure_new_job finished successfully. Job configured. Notes:["the following event '
             "names were not found in DB and therefore the job wasn't connected to them: "
-            "{'test_event_2'}\"]"
+            "['test_event_2']\"]"
         )
         assert job is not None
         assert job_in_event.event_id == event_id
         assert job_in_event.job_id == job.id
         assert response.status_code == OK
+        assert len(job.event_names) == 1
 
 
 class TestInvalidSchema:

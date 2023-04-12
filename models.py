@@ -25,7 +25,7 @@ class Job(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     image_tag = db.Column(db.String(80), unique=True, nullable=False)
     schema = db.Column(JSON, nullable=False)
-    event_names = db.Column(db.String(80), nullable=False)  # TODO: list of string
+    event_names = db.Column(JSON, nullable=False)  # TODO: list of string
     expiration_days = db.Column(db.Integer)
 
     def __init__(self, image_tag, schema, event_names, expiration_days):
