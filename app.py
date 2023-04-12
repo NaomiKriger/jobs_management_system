@@ -5,10 +5,10 @@ from http.client import OK
 from dotenv import load_dotenv
 from flask import Flask, make_response, request
 
-from app_helpers import (add_job_entry, add_job_to_job_in_event,
+from app_helpers import (add_record_to_job_table, add_record_to_job_in_event_table,
                          get_execution_command)
 from app_validations import (ConfigureJobValidations,
-                             configure_new_event_validations)
+                             validate_configure_new_event)
 from aws_operations import ecr_login
 from consts import Endpoint
 from database import add_entry, db
@@ -27,7 +27,7 @@ def index():
 
 @app.route(Endpoint.CONFIGURE_NEW_EVENT.value, methods=["POST"])
 def configure_new_event():
-    validation_response = configure_new_event_validations()
+    validation_response = validate_configure_new_event()
     if validation_response:
         return validation_response
 
@@ -43,8 +43,8 @@ def configure_new_job():
     if validation_response.status_code != OK:
         return validation_response
 
-    add_job_entry(db)
-    add_job_to_job_in_event(db)
+    add_record_to_job_table(db)
+    add_record_to_job_in_event_table(db)
 
     return make_response(
         f"{configure_new_job.__name__} finished successfully. {validation_response.get_data().decode('utf-8')}",

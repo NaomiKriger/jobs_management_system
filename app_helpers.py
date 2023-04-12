@@ -9,7 +9,7 @@ from models.job import Job
 from models.job_in_event import JobInEvent
 
 
-def add_job_entry(db):
+def add_record_to_job_table(db):
     events_found_in_db = Event.query.filter(
         Event.event_name.in_(request.json["event_names"])).all()
     events_to_connect = [event.event_name for event in events_found_in_db]
@@ -20,7 +20,7 @@ def add_job_entry(db):
     )
 
 
-def add_job_to_job_in_event(db):
+def add_record_to_job_in_event_table(db):
     job = Job.query.filter_by(image_tag=request.json["image_tag"]).first()
     event_names_found_in_db = ConfigureJobValidations.get_events_from_db_per_event_names(
         request.json["event_names"]

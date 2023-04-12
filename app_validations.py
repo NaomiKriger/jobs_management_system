@@ -22,7 +22,7 @@ def validate_input_type(param_name: str, param_value, param_expected_type) -> Op
         )
 
 
-def configure_new_event_validations() -> Optional[Response]:
+def validate_configure_new_event() -> Optional[Response]:
     try:
         event_name = request.json["event_name"]
         schema = request.json["schema"]
@@ -41,7 +41,7 @@ def configure_new_event_validations() -> Optional[Response]:
 
 class ConfigureJobValidations:
     @staticmethod
-    def validate_empty_parameter(params: dict) -> Optional[Response]:
+    def validate_missing_parameter(params: dict) -> Optional[Response]:
         empty_arguments = []
         for param_name, param_attribute in params.items():
             if not param_attribute["value"] and param_attribute["value"] != 0:
@@ -69,8 +69,8 @@ class ConfigureJobValidations:
             ("expiration_days", int),
         ]
         try:
-            for pair in param_to_type:
-                params[pair[0]] = {"value": request.json[pair[0]], "type": pair[1]}
+            for param_name, param_type in param_to_type:
+                params[param_name] = {"value": request.json[param_name], "type": param_type}
         except KeyError as e:
             return make_response(
                 f"missing required parameter: {e.args[0]}", BAD_REQUEST
@@ -86,7 +86,7 @@ class ConfigureJobValidations:
         params_excluding_schema = params.copy()
         params_excluding_schema.pop("schema")
         empty_parameter_validation_response = (
-            ConfigureJobValidations.validate_empty_parameter(params_excluding_schema)
+            ConfigureJobValidations.validate_missing_parameter(params_excluding_schema)
         )
         if empty_parameter_validation_response:
             return empty_parameter_validation_response
