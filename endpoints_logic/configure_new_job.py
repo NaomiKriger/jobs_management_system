@@ -97,10 +97,11 @@ class ConfigureJobValidations:
         try:
             JobRequest.parse_obj(request.json)
         except ValidationError as e:
+            error_message = ""
             # error['loc'][-1] is the field's name
-            error_message = ", ".join(
-                [f"{error['loc'][-1]}: {error['msg']}" for error in e.errors()]
-            )
+            for error in e.errors():
+                prefix = f"{error['loc'][-1]}: " if error['loc'][-1] != '__root__' else ''
+                error_message = ", ".join([f"{prefix}"f"{error['msg']}" for error in e.errors()])
             return make_response(error_message, HTTPStatus.BAD_REQUEST)
 
         notes = []
