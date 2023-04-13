@@ -31,24 +31,24 @@ def configure_new_job():
     return configure_new_job_response()
 
 
-@app.route("/execute_jobs_by_event", methods=["POST"])
-def execute_jobs_by_event():
-    return {"message": f"{execute_jobs_by_event.__name__} is executed"}
-
-
-@app.route("/execute_job_by_image_tag", methods=["POST"])
+@app.route(Endpoint.EXECUTE_JOB_BY_IMAGE_TAG.value, methods=["POST"])
 def execute_job_by_image_tag():
     return execute_job_by_image_tag_response()
 
 
-@app.route("/view_event_metadata", methods=["GET"])
-def view_event_metadata():
-    return {"message": f"{view_event_metadata.__name__} is executed"}
+@app.route(Endpoint.EXECUTE_JOBS_BY_EVENT.value, methods=["POST"])
+def execute_jobs_by_event():
+    return {"message": f"{execute_jobs_by_event.__name__} is executed"}
 
 
-@app.route("/view_job_metadata", methods=["GET"])
-def view_job_metadata():
-    return {"message": f"{view_job_metadata.__name__} is executed"}
+@app.route(Endpoint.VIEW_EVENT_INFO.value, methods=["GET"])
+def view_event_info():
+    return {"message": f"{view_event_info.__name__} is executed"}
+
+
+@app.route(Endpoint.VIEW_JOB_INFO.value, methods=["GET"])
+def view_job_info():
+    return {"message": f"{view_job_info.__name__} is executed"}
 
 
 if __name__ == "__main__":
