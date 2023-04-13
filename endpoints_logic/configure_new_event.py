@@ -9,7 +9,7 @@ from database import add_entry, db, read_table
 from models.event import Event
 
 
-class NewEvent(BaseModel):
+class EventRequest(BaseModel):
     event_name: str
     request_schema: dict = Field(..., alias="schema")
 
@@ -41,7 +41,7 @@ class NewEvent(BaseModel):
 
 def validate_configure_new_event() -> Optional[Response]:
     try:
-        NewEvent.parse_obj(request.json)
+        EventRequest.parse_obj(request.json)
     except ValidationError as e:
         # error['loc'][-1] is the field's name
         error_message = ", ".join(
