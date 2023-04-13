@@ -1,4 +1,4 @@
-from http.client import BAD_REQUEST, OK
+from http import HTTPStatus
 
 from consts import Endpoint
 from models.event import Event
@@ -23,12 +23,12 @@ def test_valid_input(test_client):
     job_in_event = JobInEvent.query.filter_by(job_id=job.id).first()
     event_id = Event.query.filter_by(event_name=event_pre_configured_in_db).first().id
 
-    assert response.status_code == OK
+    assert response.status_code == HTTPStatus.OK
     assert job is not None
     assert job.image_tag == data["image_tag"]
     assert job_in_event.event_id == event_id
     assert job_in_event.job_id == job.id
-    assert response.status_code == OK
+    assert response.status_code == HTTPStatus.OK
     assert (
         response.text
         == "configure_new_job finished successfully. Job configured. Notes:[]"
@@ -41,13 +41,13 @@ class TestInvalidImageTag:
     def test_missing_image_tag(self, test_client):
         self.data["image_tag"] = ""
         response = test_client.post(Endpoint.CONFIGURE_NEW_JOB.value, json=self.data)
-        assert response.status_code == BAD_REQUEST
+        assert response.status_code == HTTPStatus.BAD_REQUEST
         assert response.text == f"some required parameters are missing: ['image_tag']"
 
     def test_image_tag_of_invalid_type(self, test_client):
         self.data["image_tag"] = 123
         response = test_client.post(Endpoint.CONFIGURE_NEW_JOB.value, json=self.data)
-        assert response.status_code == BAD_REQUEST
+        assert response.status_code == HTTPStatus.BAD_REQUEST
         assert (
             response.text
             == f"image_tag type should be string. image_tag provided is {self.data.get('image_tag')}"
@@ -56,7 +56,7 @@ class TestInvalidImageTag:
     def test_no_image_tag_parameter_provided(self, test_client):
         self.data.pop("image_tag")
         response = test_client.post(Endpoint.CONFIGURE_NEW_JOB.value, json=self.data)
-        assert response.status_code == BAD_REQUEST
+        assert response.status_code == HTTPStatus.BAD_REQUEST
         assert response.text == "missing required parameter: image_tag"
         self.data["image_tag"] = "my_job"
 
@@ -68,8 +68,8 @@ class TestInvalidImageTag:
         response_second = test_client.post(
             Endpoint.CONFIGURE_NEW_JOB.value, json=self.data
         )
-        assert response_first.status_code == OK
-        assert response_second.status_code == BAD_REQUEST
+        assert response_first.status_code == HTTPStatus.OK
+        assert response_second.status_code == HTTPStatus.BAD_REQUEST
         assert (
             response_second.text == f"Image tag {self.data['image_tag']} already exists"
         )
@@ -85,13 +85,13 @@ class TestInvalidEventNames:
     def test_empty_event_names(self, test_client):
         self.data["event_names"] = []
         response = test_client.post(Endpoint.CONFIGURE_NEW_JOB.value, json=self.data)
-        assert response.status_code == BAD_REQUEST
+        assert response.status_code == HTTPStatus.BAD_REQUEST
         assert response.text == f"some required parameters are missing: ['event_names']"
 
     def test_event_names_type_is_invalid(self, test_client):
         self.data["event_names"] = 123
         response = test_client.post(Endpoint.CONFIGURE_NEW_JOB.value, json=self.data)
-        assert response.status_code == BAD_REQUEST
+        assert response.status_code == HTTPStatus.BAD_REQUEST
         assert (
             response.text
             == f"event_names type should be list. event_names provided is {self.data.get('event_names')}"
@@ -100,14 +100,14 @@ class TestInvalidEventNames:
     def test_no_event_names(self, test_client):
         self.data.pop("event_names")
         response = test_client.post(Endpoint.CONFIGURE_NEW_JOB.value, json=self.data)
-        assert response.status_code == BAD_REQUEST
+        assert response.status_code == HTTPStatus.BAD_REQUEST
         assert response.text == "missing required parameter: event_names"
 
     def test_none_of_event_names_is_found_in_db(self, test_client):
         self.data["image_tag"] = "test_job_2"
         self.data["event_names"] = ["event_123", "event_345"]
         response = test_client.post(Endpoint.CONFIGURE_NEW_JOB.value, json=self.data)
-        assert response.status_code == BAD_REQUEST
+        assert response.status_code == HTTPStatus.BAD_REQUEST
         assert response.text == "Non of the provided event names was found in DB"
 
     def test_one_event_found_in_db_and_one_event_is_not_found(self, test_client):
@@ -129,7 +129,7 @@ class TestInvalidEventNames:
         assert job is not None
         assert job_in_event.event_id == event_id
         assert job_in_event.job_id == job.id
-        assert response.status_code == OK
+        assert response.status_code == HTTPStatus.OK
         assert len(job.event_names) == 1
 
 
@@ -149,7 +149,7 @@ class TestInvalidSchema:
     def test_schema_is_not_a_json(self, test_client):
         self.data["schema"] = "abc"
         response = test_client.post(Endpoint.CONFIGURE_NEW_JOB.value, json=self.data)
-        assert response.status_code == BAD_REQUEST
+        assert response.status_code == HTTPStatus.BAD_REQUEST
         assert (
             response.text == f"schema type should be json. "
             f"schema provided is {self.data.get('schema')}"
@@ -159,7 +159,7 @@ class TestInvalidSchema:
     def test_empty_schema(self, test_client):
         self.data["schema"] = {}
         response = test_client.post(Endpoint.CONFIGURE_NEW_JOB.value, json=self.data)
-        assert response.status_code == OK
+        assert response.status_code == HTTPStatus.OK
 
 
 class TestInvalidExpirationDays:
@@ -168,7 +168,7 @@ class TestInvalidExpirationDays:
     def test_expiration_days_not_an_integer(self, test_client):
         self.data["expiration_days"] = "a"
         response = test_client.post(Endpoint.CONFIGURE_NEW_JOB.value, json=self.data)
-        assert response.status_code == BAD_REQUEST
+        assert response.status_code == HTTPStatus.BAD_REQUEST
         assert (
             response.text == f"expiration_days type should be integer. "
             f"expiration_days provided is {self.data.get('expiration_days')}"
@@ -177,7 +177,7 @@ class TestInvalidExpirationDays:
     def test_expiration_days_not_greater_than_zero(self, test_client):
         self.data["expiration_days"] = 0
         response = test_client.post(Endpoint.CONFIGURE_NEW_JOB.value, json=self.data)
-        assert response.status_code == BAD_REQUEST
+        assert response.status_code == HTTPStatus.BAD_REQUEST
         assert (
             response.text == f"Expiration days should be greater than or equal to 1. "
             f"Expiration days value = {self.data.get('expiration_days')}"
@@ -186,7 +186,7 @@ class TestInvalidExpirationDays:
     def test_expiration_days_is_empty(self, test_client):
         self.data["expiration_days"] = ""
         response = test_client.post(Endpoint.CONFIGURE_NEW_JOB.value, json=self.data)
-        assert response.status_code == BAD_REQUEST
+        assert response.status_code == HTTPStatus.BAD_REQUEST
         assert (
             response.text == "some required parameters are missing: ['expiration_days']"
         )
@@ -194,5 +194,5 @@ class TestInvalidExpirationDays:
     def test_expiration_days_parameter_not_provided(self, test_client):
         self.data.pop("expiration_days")
         response = test_client.post(Endpoint.CONFIGURE_NEW_JOB.value, json=self.data)
-        assert response.status_code == BAD_REQUEST
+        assert response.status_code == HTTPStatus.BAD_REQUEST
         assert response.text == "missing required parameter: expiration_days"

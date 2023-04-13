@@ -1,4 +1,4 @@
-from http.client import BAD_REQUEST, OK
+from http import HTTPStatus
 from typing import Optional
 
 from flask import Response, make_response, request
@@ -47,7 +47,7 @@ def validate_configure_new_event() -> Optional[Response]:
         error_message = ", ".join(
             [f"{error['loc'][-1]}: {error['msg']}" for error in e.errors()]
         )
-        return make_response(error_message, BAD_REQUEST)
+        return make_response(error_message, HTTPStatus.BAD_REQUEST)
 
 
 def configure_new_event_response():
@@ -58,4 +58,4 @@ def configure_new_event_response():
     event_name = request.json["event_name"]
     add_entry(Event(event_name, request.json["schema"]), db)
 
-    return make_response(f"event {event_name} added to the DB", OK)
+    return make_response(f"event {event_name} added to the DB", HTTPStatus.OK)

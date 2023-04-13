@@ -1,4 +1,4 @@
-from http.client import BAD_REQUEST, OK
+from http import HTTPStatus
 
 from consts import Endpoint
 from models.event import Event
@@ -12,7 +12,7 @@ def test_valid_input(test_client):
     }
     response = test_client.post(Endpoint.CONFIGURE_NEW_EVENT.value, json=data)
     event = Event.query.filter_by(event_name=data["event_name"]).first()
-    assert response.status_code == OK
+    assert response.status_code == HTTPStatus.OK
     assert response.text == f"event {data['event_name']} added to the DB"
     assert event is not None
     assert event.event_name == data["event_name"]
@@ -29,7 +29,7 @@ class TestMissingParameter:
             }
         }
         response = test_client.post(Endpoint.CONFIGURE_NEW_EVENT.value, json=data)
-        assert response.status_code == BAD_REQUEST
+        assert response.status_code == HTTPStatus.BAD_REQUEST
         assert response.text == "EventName: field required"
 
     def test_empty_event_name(self, test_client):
@@ -42,19 +42,19 @@ class TestMissingParameter:
             },
         }
         response = test_client.post(Endpoint.CONFIGURE_NEW_EVENT.value, json=data)
-        assert response.status_code == BAD_REQUEST
+        assert response.status_code == HTTPStatus.BAD_REQUEST
         assert response.text == "EventName: input cannot be empty"
 
     def test_empty_schema(self, test_client):
         data = {"event_name": "test_event_2", "schema": {}}
         response = test_client.post(Endpoint.CONFIGURE_NEW_EVENT.value, json=data)
-        assert response.status_code == OK
+        assert response.status_code == HTTPStatus.OK
 
     def test_missing_schema(self, test_client):
         response = test_client.post(
             Endpoint.CONFIGURE_NEW_EVENT.value, json={"event_name": "test_event_3"}
         )
-        assert response.status_code == BAD_REQUEST
+        assert response.status_code == HTTPStatus.BAD_REQUEST
         assert response.text == "schema: field required"
 
 
@@ -66,13 +66,13 @@ class TestInvalidParameterType:
         }
         response = test_client.post(Endpoint.CONFIGURE_NEW_EVENT.value, json=data)
         assert (
-            response.status_code == OK
+            response.status_code == HTTPStatus.OK
         )  # event_name is automatically cast to string by Pydantic
 
     def test_schema_is_not_a_json(self, test_client):
         data = {"event_name": "test_event_4", "schema": "hey there"}
         response = test_client.post(Endpoint.CONFIGURE_NEW_EVENT.value, json=data)
-        assert response.status_code == BAD_REQUEST
+        assert response.status_code == HTTPStatus.BAD_REQUEST
         assert response.text == "schema: input should be a json"
 
 
@@ -83,9 +83,9 @@ def test_event_name_already_exists_in_db(test_client):
     }
     response_first = test_client.post(Endpoint.CONFIGURE_NEW_EVENT.value, json=data)
     response_second = test_client.post(Endpoint.CONFIGURE_NEW_EVENT.value, json=data)
-    assert response_first.status_code == OK
+    assert response_first.status_code == HTTPStatus.OK
     assert response_first.text == f"event {data['event_name']} added to the DB"
-    assert response_second.status_code == BAD_REQUEST
+    assert response_second.status_code == HTTPStatus.BAD_REQUEST
     assert (
         response_second.text
         == f"EventName: event {data.get('event_name')} already exists"
