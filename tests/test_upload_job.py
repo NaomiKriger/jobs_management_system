@@ -1,15 +1,15 @@
-import unittest
 from http.client import BAD_REQUEST, OK
 
 from consts import Endpoint
 from models.event import Event
 from models.job import Job
 from models.job_in_event import JobInEvent
+from tests.conftest import event_pre_configured_in_db
 from tests.mocks import basic_schema_mock
 
 valid_request_body = {
     "image_tag": "my_job",
-    "event_names": ["test_event_1"],
+    "event_names": [event_pre_configured_in_db],
     "schema": basic_schema_mock,
     "job_logic": "TBD",
     "expiration_days": 365,
@@ -21,7 +21,7 @@ def test_valid_input(test_client):
     response = test_client.post(Endpoint.CONFIGURE_NEW_JOB.value, json=data)
     job = Job.query.filter_by(image_tag=data["image_tag"]).first()
     job_in_event = JobInEvent.query.filter_by(job_id=job.id).first()
-    event_id = Event.query.filter_by(event_name="test_event_1").first().id
+    event_id = Event.query.filter_by(event_name=event_pre_configured_in_db).first().id
 
     assert response.status_code == OK
     assert job is not None
@@ -29,7 +29,10 @@ def test_valid_input(test_client):
     assert job_in_event.event_id == event_id
     assert job_in_event.job_id == job.id
     assert response.status_code == OK
-    assert response.text == "configure_new_job finished successfully. Job configured. Notes:[]"
+    assert (
+        response.text
+        == "configure_new_job finished successfully. Job configured. Notes:[]"
+    )
 
 
 class TestInvalidImageTag:
@@ -46,8 +49,8 @@ class TestInvalidImageTag:
         response = test_client.post(Endpoint.CONFIGURE_NEW_JOB.value, json=self.data)
         assert response.status_code == BAD_REQUEST
         assert (
-                response.text
-                == f"image_tag type should be string. image_tag provided is {self.data.get('image_tag')}"
+            response.text
+            == f"image_tag type should be string. image_tag provided is {self.data.get('image_tag')}"
         )
 
     def test_no_image_tag_parameter_provided(self, test_client):
@@ -59,12 +62,16 @@ class TestInvalidImageTag:
 
     def test_image_tag_already_exists(self, test_client):
         self.data["image_tag"] = "test_job_1"
-        response_first = test_client.post(Endpoint.CONFIGURE_NEW_JOB.value, json=self.data)
-        response_second = test_client.post(Endpoint.CONFIGURE_NEW_JOB.value, json=self.data)
+        response_first = test_client.post(
+            Endpoint.CONFIGURE_NEW_JOB.value, json=self.data
+        )
+        response_second = test_client.post(
+            Endpoint.CONFIGURE_NEW_JOB.value, json=self.data
+        )
         assert response_first.status_code == OK
         assert response_second.status_code == BAD_REQUEST
         assert (
-                response_second.text == f"Image tag {self.data['image_tag']} already exists"
+            response_second.text == f"Image tag {self.data['image_tag']} already exists"
         )
 
 
@@ -86,8 +93,8 @@ class TestInvalidEventNames:
         response = test_client.post(Endpoint.CONFIGURE_NEW_JOB.value, json=self.data)
         assert response.status_code == BAD_REQUEST
         assert (
-                response.text
-                == f"event_names type should be list. event_names provided is {self.data.get('event_names')}"
+            response.text
+            == f"event_names type should be list. event_names provided is {self.data.get('event_names')}"
         )
 
     def test_no_event_names(self, test_client):
@@ -104,19 +111,20 @@ class TestInvalidEventNames:
         assert response.text == "Non of the provided event names was found in DB"
 
     def test_one_event_found_in_db_and_one_event_is_not_found(self, test_client):
-        self.data[
-            "image_tag"
-        ] = "test_job_2"  # test_event_1 pre-configured in DB in conftest.py
-        self.data["event_names"] = ["test_event_1", "test_event_2"]
+        self.data["image_tag"] = "test_job_2"
+        event_not_in_db = "event_not_in_db"
+        self.data["event_names"] = [event_not_in_db, event_pre_configured_in_db]
         response = test_client.post(Endpoint.CONFIGURE_NEW_JOB.value, json=self.data)
         job = Job.query.filter_by(image_tag=self.data["image_tag"]).first()
         job_in_event = JobInEvent.query.filter_by(job_id=job.id).first()
-        event_id = Event.query.filter_by(event_name="test_event_1").first().id
+        event_id = (
+            Event.query.filter_by(event_name=event_pre_configured_in_db).first().id
+        )
 
         assert response.text == (
             'configure_new_job finished successfully. Job configured. Notes:["the following event '
             "names were not found in DB and therefore the job wasn't connected to them: "
-            "['test_event_2']\"]"
+            f"['{event_not_in_db}']\"]"
         )
         assert job is not None
         assert job_in_event.event_id == event_id
@@ -127,12 +135,12 @@ class TestInvalidEventNames:
 
 class TestInvalidSchema:
     """
-    scenarios: schema is not a sub-type of one of the events' schemas
+    scenarios left to implement: schema is not a sub-type of one of the events' schemas
     """
 
     data = {
         "image_tag": "test_job_3",
-        "event_names": ["test_event_1"],
+        "event_names": [event_pre_configured_in_db],
         "schema": basic_schema_mock,
         "job_logic": "TBD",
         "expiration_days": 365,
@@ -143,8 +151,8 @@ class TestInvalidSchema:
         response = test_client.post(Endpoint.CONFIGURE_NEW_JOB.value, json=self.data)
         assert response.status_code == BAD_REQUEST
         assert (
-                response.text == f"schema type should be json. "
-                                 f"schema provided is {self.data.get('schema')}"
+            response.text == f"schema type should be json. "
+            f"schema provided is {self.data.get('schema')}"
         )
 
     # it is acceptable to provide an empty schema
@@ -152,14 +160,6 @@ class TestInvalidSchema:
         self.data["schema"] = {}
         response = test_client.post(Endpoint.CONFIGURE_NEW_JOB.value, json=self.data)
         assert response.status_code == OK
-
-
-@unittest.skip("Not implemented")
-def test_invalid_job_type(test_client):
-    """
-    scenarios: job is not a Docker image
-    """
-    pass
 
 
 class TestInvalidExpirationDays:
@@ -170,8 +170,8 @@ class TestInvalidExpirationDays:
         response = test_client.post(Endpoint.CONFIGURE_NEW_JOB.value, json=self.data)
         assert response.status_code == BAD_REQUEST
         assert (
-                response.text == f"expiration_days type should be integer. "
-                                 f"expiration_days provided is {self.data.get('expiration_days')}"
+            response.text == f"expiration_days type should be integer. "
+            f"expiration_days provided is {self.data.get('expiration_days')}"
         )
 
     def test_expiration_days_not_greater_than_zero(self, test_client):
@@ -179,8 +179,8 @@ class TestInvalidExpirationDays:
         response = test_client.post(Endpoint.CONFIGURE_NEW_JOB.value, json=self.data)
         assert response.status_code == BAD_REQUEST
         assert (
-                response.text == f"Expiration days should be greater than or equal to 1. "
-                                 f"Expiration days value = {self.data.get('expiration_days')}"
+            response.text == f"Expiration days should be greater than or equal to 1. "
+            f"Expiration days value = {self.data.get('expiration_days')}"
         )
 
     def test_expiration_days_is_empty(self, test_client):
@@ -188,7 +188,7 @@ class TestInvalidExpirationDays:
         response = test_client.post(Endpoint.CONFIGURE_NEW_JOB.value, json=self.data)
         assert response.status_code == BAD_REQUEST
         assert (
-                response.text == "some required parameters are missing: ['expiration_days']"
+            response.text == "some required parameters are missing: ['expiration_days']"
         )
 
     def test_expiration_days_parameter_not_provided(self, test_client):

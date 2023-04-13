@@ -7,7 +7,7 @@ from tests.mocks import basic_schema_mock
 
 def test_valid_input(test_client):
     data = {
-        "event_name": "my_event",
+        "event_name": "test_event_1",
         "schema": basic_schema_mock,
     }
     response = test_client.post(Endpoint.CONFIGURE_NEW_EVENT.value, json=data)
@@ -22,42 +22,63 @@ def test_valid_input(test_client):
 class TestMissingParameter:
     def test_missing_event_name(self, test_client):
         data = {
-            "type": "object",
-            "properties": {"name": {"type": "string"}, "age": {"type": "number"}},
-            "required": ["name", "age"],
+            "schema": {
+                "type": "object",
+                "properties": {"name": {"type": "string"}, "age": {"type": "number"}},
+                "required": ["name", "age"],
+            }
         }
         response = test_client.post(Endpoint.CONFIGURE_NEW_EVENT.value, json=data)
         assert response.status_code == BAD_REQUEST
-        assert response.text == "missing required parameter: event_name"
+        assert response.text == "EventName: field required"
+
+    def test_empty_event_name(self, test_client):
+        data = {
+            "event_name": "",
+            "schema": {
+                "type": "object",
+                "properties": {"name": {"type": "string"}, "age": {"type": "number"}},
+                "required": ["name", "age"],
+            },
+        }
+        response = test_client.post(Endpoint.CONFIGURE_NEW_EVENT.value, json=data)
+        assert response.status_code == BAD_REQUEST
+        assert response.text == "EventName: input cannot be empty"
+
+    def test_empty_schema(self, test_client):
+        data = {"event_name": "test_event_2", "schema": {}}
+        response = test_client.post(Endpoint.CONFIGURE_NEW_EVENT.value, json=data)
+        assert response.status_code == OK
 
     def test_missing_schema(self, test_client):
         response = test_client.post(
-            Endpoint.CONFIGURE_NEW_EVENT.value, json={"event_name": "my_event"}
+            Endpoint.CONFIGURE_NEW_EVENT.value, json={"event_name": "test_event_3"}
         )
         assert response.status_code == BAD_REQUEST
-        assert response.text == "missing required parameter: schema"
+        assert response.text == "schema: field required"
 
 
 class TestInvalidParameterType:
-    def test_event_name_is_not_a_string(self, test_client):
+    def test_event_name_non_string_input_provided(self, test_client):
         data = {
             "event_name": 123,
             "schema": basic_schema_mock,
         }
         response = test_client.post(Endpoint.CONFIGURE_NEW_EVENT.value, json=data)
-        assert response.status_code == BAD_REQUEST
-        assert response.text == "event_name should be a string"
+        assert (
+            response.status_code == OK
+        )  # event_name is automatically cast to string by Pydantic
 
     def test_schema_is_not_a_json(self, test_client):
-        data = {"event_name": "my_event", "schema": "hey there"}
+        data = {"event_name": "test_event_4", "schema": "hey there"}
         response = test_client.post(Endpoint.CONFIGURE_NEW_EVENT.value, json=data)
         assert response.status_code == BAD_REQUEST
-        assert response.text == "schema should be a json"
+        assert response.text == "schema: input should be a json"
 
 
 def test_event_name_already_exists_in_db(test_client):
     data = {
-        "event_name": "test_event_in_db",
+        "event_name": "test_event_5",
         "schema": basic_schema_mock,
     }
     response_first = test_client.post(Endpoint.CONFIGURE_NEW_EVENT.value, json=data)
@@ -65,4 +86,7 @@ def test_event_name_already_exists_in_db(test_client):
     assert response_first.status_code == OK
     assert response_first.text == f"event {data['event_name']} added to the DB"
     assert response_second.status_code == BAD_REQUEST
-    assert response_second.text == f"event {data.get('event_name')} already exists"
+    assert (
+        response_second.text
+        == f"EventName: event {data.get('event_name')} already exists"
+    )

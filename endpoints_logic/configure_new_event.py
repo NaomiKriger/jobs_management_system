@@ -2,26 +2,52 @@ from http.client import BAD_REQUEST, OK
 from typing import Optional
 
 from flask import Response, make_response, request
+from pydantic import BaseModel, Field, ValidationError, validator
+from pydantic.utils import to_camel
 
 from database import add_entry, db, read_table
 from models.event import Event
 
 
+class NewEventRequest(BaseModel):
+    event_name: str
+    request_schema: dict = Field(..., alias="schema")
+
+    @validator("event_name")
+    def validate_event_name_is_not_empty(cls, event_name):
+        if not event_name:
+            raise ValueError("input cannot be empty")
+        return event_name
+
+    @validator("event_name")
+    def validate_event_name_already_exists(cls, event_name):
+        event_names = {event.event_name for event in read_table(Event)}
+        if event_name in event_names:
+            raise ValueError(f"event {event_name} already exists")
+        return event_name
+
+    @validator("request_schema", pre=True)
+    def validate_schema_is_a_json(cls, schema):
+        if not isinstance(schema, dict):
+            raise ValueError("input should be a json")
+        return schema
+
+    class Config:
+        allow_population_by_field_name = True
+        use_enum_values = True
+        validate_assignment = True
+        alias_generator = to_camel
+
+
 def validate_configure_new_event() -> Optional[Response]:
     try:
-        event_name = request.json["event_name"]
-        schema = request.json["schema"]
-    except KeyError as e:
-        return make_response(f"missing required parameter: {e.args[0]}", BAD_REQUEST)
-
-    if not isinstance(event_name, str):
-        return make_response("event_name should be a string", BAD_REQUEST)
-    if not isinstance(schema, dict):
-        return make_response("schema should be a json", BAD_REQUEST)
-
-    event_names = {event.event_name for event in read_table(Event)}
-    if event_name in event_names:
-        return make_response(f"event {event_name} already exists", BAD_REQUEST)
+        NewEventRequest.parse_obj(request.json)
+    except ValidationError as e:
+        # error['loc'][-1] is the field's name
+        error_message = ", ".join(
+            [f"{error['loc'][-1]}: {error['msg']}" for error in e.errors()]
+        )
+        return make_response(error_message, BAD_REQUEST)
 
 
 def configure_new_event_response():
