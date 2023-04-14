@@ -1,8 +1,9 @@
 from http import HTTPStatus
-from typing import Optional
+from typing import List, Optional
 
 from flask import Response, make_response, request
-from pydantic import Field, ValidationError, validator, BaseModel, root_validator
+from pydantic import (BaseModel, Field, ValidationError, root_validator,
+                      validator)
 from pydantic.utils import to_camel
 
 from consts import Endpoint
@@ -20,7 +21,7 @@ def get_event_names_from_db(event_names):
 
 class JobConfigurationRequest(BaseModel):
     image_tag: str
-    event_names: list
+    event_names: List[str]  # TODO: consider changing to a list of strings
     request_schema: dict = Field(..., alias="schema")
     expiration_days: int
 
@@ -37,11 +38,18 @@ class JobConfigurationRequest(BaseModel):
             raise ValueError("input should be a json")
         return schema
 
+    @validator("event_names", pre=True)
+    def validate_event_names_is_list_of_strings(cls, event_names):
+        for event_name in event_names:
+            if not isinstance(event_name, str):
+                raise ValueError("input should be a list of strings")
+        return event_names
+
     @validator("*", pre=True)
-    def validate_input_types(
-        cls, value, field
-    ):  # schema has already been validated and therefore excluded here
+    def validate_input_types(cls, value, field):
         expected_type = field.type_
+        if field.name == "event_names":
+            return value
         if not isinstance(value, expected_type):
             raise ValueError(
                 f"Expected type {MAP_TYPES_TO_NAMES.get(expected_type)} for field {field.name}, "

@@ -12,7 +12,6 @@ valid_request_body = {
     "image_tag": str(uuid.uuid4()),
     "event_names": [event_pre_configured_in_db],
     "schema": basic_schema_mock,
-    "job_logic": "TBD",
     "expiration_days": 365,
 }
 
@@ -98,6 +97,12 @@ class TestEventNames:
             response.text
             == "EventNames: Expected type list for field event_names, but got integer instead."
         )
+
+    def test_event_names_is_list_of_non_str_types(self, test_client):
+        self.data["event_names"] = ["abc", 123]
+        response = test_client.post(Endpoint.CONFIGURE_NEW_JOB.value, json=self.data)
+        assert response.status_code == HTTPStatus.BAD_REQUEST
+        assert response.text == "EventNames: input should be a list of strings"
 
     def test_no_event_names(self, test_client):
         self.data.pop("event_names")
