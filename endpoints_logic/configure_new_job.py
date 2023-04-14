@@ -21,7 +21,7 @@ def get_event_names_from_db(event_names):
 
 class JobConfigurationRequest(BaseModel):
     image_tag: str
-    event_names: List[str]  # TODO: consider changing to a list of strings
+    event_names: List[str]
     request_schema: dict = Field(..., alias="schema")
     expiration_days: int
 
