@@ -18,7 +18,7 @@ def get_event_names_from_db(event_names):
     return Event.query.filter(Event.event_name.in_(event_names)).all()
 
 
-class JobRequest(BaseModel):
+class JobConfigurationRequest(BaseModel):
     image_tag: str
     event_names: list
     request_schema: dict = Field(..., alias="schema")
@@ -38,11 +38,15 @@ class JobRequest(BaseModel):
         return schema
 
     @validator("*", pre=True)
-    def validate_input_types(cls, value, field):  # schema has already been validated and therefore excluded here
+    def validate_input_types(
+        cls, value, field
+    ):  # schema has already been validated and therefore excluded here
         expected_type = field.type_
         if not isinstance(value, expected_type):
-            raise ValueError(f"Expected type {MAP_TYPES_TO_NAMES.get(expected_type)} for field {field.name}, "
-                             f"but got {MAP_TYPES_TO_NAMES.get(type(value))} instead.")
+            raise ValueError(
+                f"Expected type {MAP_TYPES_TO_NAMES.get(expected_type)} for field {field.name}, "
+                f"but got {MAP_TYPES_TO_NAMES.get(type(value))} instead."
+            )
         return value
 
     @validator("image_tag")
@@ -61,8 +65,10 @@ class JobRequest(BaseModel):
     @validator("expiration_days")
     def validate_expiration_days_greater_than_zero(cls, expiration_days):
         if expiration_days <= 0:
-            raise ValueError(f"Expiration days should be greater than or equal to 1. "
-                             f"Expiration days value = {expiration_days}")
+            raise ValueError(
+                f"Expiration days should be greater than or equal to 1. "
+                f"Expiration days value = {expiration_days}"
+            )
         return expiration_days
 
     class Config:
@@ -72,46 +78,51 @@ class JobRequest(BaseModel):
         alias_generator = to_camel
 
 
+def get_input_event_names_that_are_not_found_in_db():
+    input_event_names = request.json["event_names"]
+    input_event_names_found_in_db = get_event_names_from_db(input_event_names)
+    input_events_that_are_not_in_db = set(input_event_names) - set(
+        event.event_name for event in input_event_names_found_in_db
+    )
+    return input_events_that_are_not_in_db
+
+
 class ConfigureJobValidations:
-
-    @staticmethod
-    def get_events_from_db_per_event_names(event_names: set) -> set:
-        events = read_table(Event)
-        events_to_return = set()
-        for event in events:
-            if event.event_name in event_names:
-                events_to_return.add(event)
-        return events_to_return
-
-    @staticmethod
-    def get_input_event_names_that_are_not_found_in_db():
-        input_event_names = request.json["event_names"]
-        input_event_names_found_in_db = get_event_names_from_db(input_event_names)
-        input_events_that_are_not_in_db = set(input_event_names) - set(
-            event.event_name for event in input_event_names_found_in_db
-        )
-        return input_events_that_are_not_in_db
-
     @staticmethod
     def validate_job_parameters() -> Optional[Response]:
         try:
-            JobRequest.parse_obj(request.json)
+            JobConfigurationRequest.parse_obj(request.json)
         except ValidationError as e:
             error_message = ""
             # error['loc'][-1] is the field's name
             for error in e.errors():
-                prefix = f"{error['loc'][-1]}: " if error['loc'][-1] != '__root__' else ''
-                error_message = ", ".join([f"{prefix}"f"{error['msg']}" for error in e.errors()])
+                prefix = (
+                    f"{error['loc'][-1]}: " if error["loc"][-1] != "__root__" else ""
+                )
+                error_message = ", ".join(
+                    [f"{prefix}" f"{error['msg']}" for error in e.errors()]
+                )
             return make_response(error_message, HTTPStatus.BAD_REQUEST)
 
         notes = []
-        input_events_that_are_not_found_in_db = ConfigureJobValidations.get_input_event_names_that_are_not_found_in_db()
+        input_events_that_are_not_found_in_db = (
+            get_input_event_names_that_are_not_found_in_db()
+        )
         if input_events_that_are_not_found_in_db:
             notes.append(
                 f"the following event names were not found in DB and therefore "
                 f"the job wasn't connected to them: {list(input_events_that_are_not_found_in_db)}"
             )
         return make_response(f"Job configured. Notes:{notes}", HTTPStatus.OK)
+
+
+def get_events_from_db_per_event_names(event_names: set) -> set:
+    events = read_table(Event)
+    events_to_return = set()
+    for event in events:
+        if event.event_name in event_names:
+            events_to_return.add(event)
+    return events_to_return
 
 
 def add_record_to_job_table():
@@ -132,10 +143,8 @@ def add_record_to_job_table():
 
 def add_record_to_job_in_event_table():
     job = Job.query.filter_by(image_tag=request.json["image_tag"]).first()
-    event_names_found_in_db = (
-        ConfigureJobValidations.get_events_from_db_per_event_names(
-            request.json["event_names"]
-        )
+    event_names_found_in_db = get_events_from_db_per_event_names(
+        request.json["event_names"]
     )
     for event in event_names_found_in_db:
         add_entry(JobInEvent(job, event), db)
