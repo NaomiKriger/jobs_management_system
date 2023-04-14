@@ -31,12 +31,12 @@ def test_valid_input(test_client):
     assert job_in_event.job_id == job.id
     assert response.status_code == HTTPStatus.OK
     assert (
-            response.text
-            == "configure_new_job finished successfully. Job configured. Notes:[]"
+        response.text
+        == "configure_new_job finished successfully. Job configured. Notes:[]"
     )
 
 
-class TestInvalidImageTag:
+class TestImageTag:
     data = valid_request_body.copy()
 
     def test_empty_image_tag(self, test_client):
@@ -49,7 +49,10 @@ class TestInvalidImageTag:
         self.data["image_tag"] = 123
         response = test_client.post(Endpoint.CONFIGURE_NEW_JOB.value, json=self.data)
         assert response.status_code == HTTPStatus.BAD_REQUEST
-        assert response.text == "ImageTag: Expected type string for field image_tag, but got integer instead."
+        assert (
+            response.text
+            == "ImageTag: Expected type string for field image_tag, but got integer instead."
+        )
 
     def test_no_image_tag_parameter_provided(self, test_client):
         self.data.pop("image_tag")
@@ -67,10 +70,13 @@ class TestInvalidImageTag:
         )
         assert response_first.status_code == HTTPStatus.OK
         assert response_second.status_code == HTTPStatus.BAD_REQUEST
-        assert response_second.text == f"ImageTag: image {self.data['image_tag']} already exists"
+        assert (
+            response_second.text
+            == f"ImageTag: image {self.data['image_tag']} already exists"
+        )
 
 
-class TestInvalidEventNames:
+class TestEventNames:
     """
     scenarios left to implement: event names in list are not strings
     """
@@ -89,8 +95,8 @@ class TestInvalidEventNames:
         response = test_client.post(Endpoint.CONFIGURE_NEW_JOB.value, json=self.data)
         assert response.status_code == HTTPStatus.BAD_REQUEST
         assert (
-                response.text
-                == "EventNames: Expected type list for field event_names, but got integer instead."
+            response.text
+            == "EventNames: Expected type list for field event_names, but got integer instead."
         )
 
     def test_no_event_names(self, test_client):
@@ -106,8 +112,8 @@ class TestInvalidEventNames:
         response = test_client.post(Endpoint.CONFIGURE_NEW_JOB.value, json=self.data)
         assert response.status_code == HTTPStatus.BAD_REQUEST
         assert (
-                response.text
-                == "EventNames: None of the provided event names was found in DB"
+            response.text
+            == "EventNames: None of the provided event names was found in DB"
         )
 
     def test_one_event_found_in_db_and_one_event_is_not_found(self, test_client):
@@ -133,7 +139,7 @@ class TestInvalidEventNames:
         assert len(job.event_names) == 1
 
 
-class TestInvalidSchema:
+class TestSchema:
     """
     scenarios left to implement: schema is not a sub-type of one of the events' schemas
     """
@@ -146,8 +152,8 @@ class TestInvalidSchema:
         "expiration_days": 365,
     }
 
-    # it is acceptable to provide an empty schema
     def test_empty_schema(self, test_client):
+        # it is acceptable to provide an empty schema
         self.data["image_tag"] = str(uuid.uuid4())
         self.data["schema"] = {}
         response = test_client.post(Endpoint.CONFIGURE_NEW_JOB.value, json=self.data)
@@ -161,7 +167,7 @@ class TestInvalidSchema:
         assert response.text == "schema: input should be a json"
 
 
-class TestInvalidExpirationDays:
+class TestExpirationDays:
     data = valid_request_body.copy()
 
     def test_expiration_days_not_an_integer(self, test_client):
@@ -170,8 +176,8 @@ class TestInvalidExpirationDays:
         response = test_client.post(Endpoint.CONFIGURE_NEW_JOB.value, json=self.data)
         assert response.status_code == HTTPStatus.BAD_REQUEST
         assert (
-                response.text == "ExpirationDays: "
-                                 "Expected type integer for field expiration_days, but got string instead."
+            response.text == "ExpirationDays: "
+            "Expected type integer for field expiration_days, but got string instead."
         )
 
     def test_expiration_days_not_greater_than_zero(self, test_client):
@@ -179,9 +185,9 @@ class TestInvalidExpirationDays:
         response = test_client.post(Endpoint.CONFIGURE_NEW_JOB.value, json=self.data)
         assert response.status_code == HTTPStatus.BAD_REQUEST
         assert (
-                response.text
-                == "ExpirationDays: Expiration days should be greater than or equal to 1. "
-                   f"Expiration days value = {self.data.get('expiration_days')}"
+            response.text
+            == "ExpirationDays: Expiration days should be greater than or equal to 1. "
+            f"Expiration days value = {self.data.get('expiration_days')}"
         )
 
     def test_expiration_days_is_empty(self, test_client):
