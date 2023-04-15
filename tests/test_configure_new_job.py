@@ -76,9 +76,6 @@ class TestImageTag:
 
 
 class TestEventNames:
-    """
-    scenarios left to implement: event names in list are not strings
-    """
 
     data = valid_request_body.copy()
 
@@ -150,7 +147,6 @@ class TestSchema:
         "image_tag": str(uuid.uuid4()),
         "event_names": [event_name_pre_configured_in_db],
         "schema": basic_schema_mock,
-        "job_logic": "TBD",
         "expiration_days": 365,
     }
 
