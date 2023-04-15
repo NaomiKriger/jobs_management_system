@@ -5,12 +5,12 @@ from consts import Endpoint
 from models.event import Event
 from models.job import Job
 from models.job_in_event import JobInEvent
-from tests.conftest import event_pre_configured_in_db
+from tests.conftest import event_name_pre_configured_in_db
 from tests.mocks import basic_schema_mock
 
 valid_request_body = {
     "image_tag": str(uuid.uuid4()),
-    "event_names": [event_pre_configured_in_db],
+    "event_names": [event_name_pre_configured_in_db],
     "schema": basic_schema_mock,
     "expiration_days": 365,
 }
@@ -21,7 +21,7 @@ def test_valid_input(test_client):
     response = test_client.post(Endpoint.CONFIGURE_NEW_JOB.value, json=data)
     job = Job.query.filter_by(image_tag=data["image_tag"]).first()
     job_in_event = JobInEvent.query.filter_by(job_id=job.id).first()
-    event_id = Event.query.filter_by(event_name=event_pre_configured_in_db).first().id
+    event_id = Event.query.filter_by(event_name=event_name_pre_configured_in_db).first().id
 
     assert response.status_code == HTTPStatus.OK
     assert job is not None
@@ -121,12 +121,12 @@ class TestEventNames:
     def test_one_event_found_in_db_and_one_event_is_not_found(self, test_client):
         self.data["image_tag"] = str(uuid.uuid4())
         event_not_in_db = str(uuid.uuid4())
-        self.data["event_names"] = [event_not_in_db, event_pre_configured_in_db]
+        self.data["event_names"] = [event_not_in_db, event_name_pre_configured_in_db]
         response = test_client.post(Endpoint.CONFIGURE_NEW_JOB.value, json=self.data)
         job = Job.query.filter_by(image_tag=self.data["image_tag"]).first()
         job_in_event = JobInEvent.query.filter_by(job_id=job.id).first()
         event_id = (
-            Event.query.filter_by(event_name=event_pre_configured_in_db).first().id
+            Event.query.filter_by(event_name=event_name_pre_configured_in_db).first().id
         )
 
         assert response.text == (
@@ -148,7 +148,7 @@ class TestSchema:
 
     data = {
         "image_tag": str(uuid.uuid4()),
-        "event_names": [event_pre_configured_in_db],
+        "event_names": [event_name_pre_configured_in_db],
         "schema": basic_schema_mock,
         "job_logic": "TBD",
         "expiration_days": 365,

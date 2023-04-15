@@ -5,9 +5,9 @@ from flask import Flask
 
 from consts import Endpoint
 from database import db
-from endpoints_logic.configure_new_event import configure_new_event_response
-from endpoints_logic.configure_new_job import configure_new_job_response
-from endpoints_logic.execute_job_by_image_tag import \
+from endpoints.configure_new_event_logic import configure_new_event_response
+from endpoints.configure_new_job_logic import configure_new_job_response
+from endpoints.execute_job_by_image_tag_logic import \
     execute_job_by_image_tag_response
 
 load_dotenv()
