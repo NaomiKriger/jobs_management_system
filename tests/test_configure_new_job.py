@@ -90,13 +90,10 @@ class TestEventNames:
         assert response.text == "event_names cannot be empty"
 
     def test_event_names_type_is_invalid(self, test_client):
-        self.data["event_names"] = 123
+        self.data["event_names"] = [123]
         response = test_client.post(Endpoint.CONFIGURE_NEW_JOB.value, json=self.data)
         assert response.status_code == HTTPStatus.BAD_REQUEST
-        assert (
-            response.text
-            == "EventNames: Expected type list for field event_names, but got integer instead."
-        )
+        assert response.text == "EventNames: input should be a list of strings"
 
     def test_event_names_is_list_of_non_str_types(self, test_client):
         self.data["event_names"] = ["abc", 123]
