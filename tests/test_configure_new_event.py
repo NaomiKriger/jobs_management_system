@@ -1,7 +1,7 @@
 from http import HTTPStatus
 
-from consts import Endpoint
-from models.event import Event
+from src.consts import Endpoint
+from src.models.event import Event
 from tests.mocks import basic_schema_mock
 
 

@@ -3,9 +3,9 @@ from typing import List
 from pydantic import BaseModel, Field, root_validator, validator
 from pydantic.utils import to_camel
 
-from database import read_table
-from endpoints.commons import get_event_names_from_db
-from models.job import Job
+from src.database import read_table
+from src.endpoints.commons import get_event_names_from_db
+from src.models.job import Job
 
 MAP_TYPES_TO_NAMES = {str: "string", int: "integer", list: "list", dict: "json"}
 

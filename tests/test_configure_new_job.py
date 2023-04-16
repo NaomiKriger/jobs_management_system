@@ -1,10 +1,10 @@
 import uuid
 from http import HTTPStatus
 
-from consts import Endpoint
-from models.event import Event
-from models.job import Job
-from models.job_in_event import JobInEvent
+from src.consts import Endpoint
+from src.models.event import Event
+from src.models.job import Job
+from src.models.job_in_event import JobInEvent
 from tests.conftest import event_name_pre_configured_in_db
 from tests.mocks import basic_schema_mock
 

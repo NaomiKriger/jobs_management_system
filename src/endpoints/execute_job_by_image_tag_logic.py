@@ -3,7 +3,7 @@ import subprocess
 
 from flask import request
 
-from aws_operations import ecr_login
+from src.aws_operations import ecr_login
 
 
 def get_execution_command():

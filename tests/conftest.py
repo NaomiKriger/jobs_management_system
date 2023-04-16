@@ -4,8 +4,8 @@ import pytest
 from dotenv import load_dotenv
 
 from app import app
-from database import db
-from models.event import Event
+from src.database import db
+from src.models.event import Event
 from tests.mocks import basic_schema_mock
 
 load_dotenv()

@@ -4,13 +4,13 @@ from typing import Optional
 from flask import Response, make_response, request
 from pydantic import (ValidationError)
 
-from consts import Endpoint
-from database import add_entry, db, read_table
-from endpoints.commons import get_event_names_from_db
-from endpoints.configure_new_job_entity import JobConfigurationRequest
-from models.event import Event
-from models.job import Job
-from models.job_in_event import JobInEvent
+from src.consts import Endpoint
+from src.database import add_entry, db, read_table
+from src.endpoints.commons import get_event_names_from_db
+from src.endpoints.configure_new_job_entity import JobConfigurationRequest
+from src.models.event import Event
+from src.models.job import Job
+from src.models.job_in_event import JobInEvent
 
 
 def get_input_event_names_that_are_not_found_in_db():

@@ -1,6 +1,6 @@
 from sqlalchemy import JSON
 
-from database import db
+from src.database import db
 
 
 class Event(db.Model):

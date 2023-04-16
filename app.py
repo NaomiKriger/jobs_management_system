@@ -3,11 +3,12 @@ import os
 from dotenv import load_dotenv
 from flask import Flask
 
-from consts import Endpoint
-from database import db
-from endpoints.configure_new_event_logic import configure_new_event_response
-from endpoints.configure_new_job_logic import configure_new_job_response
-from endpoints.execute_job_by_image_tag_logic import \
+from src.consts import Endpoint
+from src.database import db
+from src.endpoints.configure_new_event_logic import configure_new_event_response
+from src.endpoints.configure_new_job_logic import configure_new_job_response
+
+from src.endpoints.execute_job_by_image_tag_logic import \
     execute_job_by_image_tag_response
 
 load_dotenv()

@@ -1,8 +1,8 @@
 from pydantic import BaseModel, Field, validator
 from pydantic.utils import to_camel
 
-from database import read_table
-from models.event import Event
+from src.database import read_table
+from src.models.event import Event
 
 
 class EventConfigurationRequest(BaseModel):

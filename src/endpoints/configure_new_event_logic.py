@@ -4,9 +4,9 @@ from typing import Optional
 from flask import Response, make_response, request
 from pydantic import ValidationError
 
-from database import add_entry, db
-from endpoints.configure_new_event_entity import EventConfigurationRequest
-from models.event import Event
+from src.database import add_entry, db
+from src.endpoints.configure_new_event_entity import EventConfigurationRequest
+from src.models.event import Event
 
 
 def validate_configure_new_event() -> Optional[Response]:
