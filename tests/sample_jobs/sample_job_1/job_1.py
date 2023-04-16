@@ -12,7 +12,12 @@ parser.add_argument("--url", required=True, help="url")
 
 
 def main(source_name, url):
-    if not source_name or not url or not isinstance(source_name, str) or not isinstance(url, str):
+    if (
+        not source_name
+        or not url
+        or not isinstance(source_name, str)
+        or not isinstance(url, str)
+    ):
         return {}
 
     source = requests.get(url).text
@@ -25,7 +30,9 @@ def main(source_name, url):
         current_table = pd.read_html(str(table))[0][["SOURCE", "VERSION"]]
         for index, row in current_table.iterrows():
             if row.VERSION not in dict_to_update[source_name]:
-                dict_to_update[source_name].update({row.VERSION: {"source": row.SOURCE, "tested": False}})
+                dict_to_update[source_name].update(
+                    {row.VERSION: {"source": row.SOURCE, "tested": False}}
+                )
             if len(dict_to_update[source_name]) >= 10:
                 break
     versions_and_sources.update(dict_to_update)

@@ -12,7 +12,9 @@ def ecr_login():
     if expiration_time:
         expiration_time = datetime.strptime(expiration_time, DATETIME_FORMAT)
 
-    if token and expiration_time and datetime.now() < expiration_time:  # token is still valid
+    if (
+        token and expiration_time and datetime.now() < expiration_time
+    ):  # token is still valid
         return
 
     ecr_client = boto3.client("ecr")
@@ -22,4 +24,6 @@ def ecr_login():
 
     # cache the token
     os.environ["ECR_LOGIN_TOKEN"] = token
-    os.environ["ECR_LOGIN_TOKEN_EXPIRATION_TIME"] = expiration_time.strftime(DATETIME_FORMAT)
+    os.environ["ECR_LOGIN_TOKEN_EXPIRATION_TIME"] = expiration_time.strftime(
+        DATETIME_FORMAT
+    )

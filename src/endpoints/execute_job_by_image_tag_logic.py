@@ -1,12 +1,13 @@
 import os
 import subprocess
+from typing import List
 
-from flask import request
+from flask import Response, make_response, request
 
 from src.aws_operations import ecr_login
 
 
-def get_execution_command():
+def get_execution_command() -> List[str]:
     ecr_path = os.getenv("ECR_PATH")
     repository_name = os.getenv("ECR_REPOSITORY_NAME")
     image_tag = request.json.get("image_tag")
@@ -33,7 +34,7 @@ def get_execution_flags() -> list:
     return flags
 
 
-def execute_job_by_image_tag_response():
+def execute_job_by_image_tag_response() -> Response:
     ecr_login()
     result = subprocess.run(
         get_execution_command(),
@@ -41,4 +42,4 @@ def execute_job_by_image_tag_response():
         text=True,
     )
 
-    return {"output": result.stdout, "error": result.stderr}
+    return make_response({"output": result.stdout, "error": result.stderr})

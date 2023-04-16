@@ -10,7 +10,7 @@ class Event(db.Model):
     event_name = db.Column(db.String(80), unique=True, nullable=False)
     schema = db.Column(JSON, nullable=False)
 
-    def __init__(self, event_name, schema):
+    def __init__(self, event_name: str, schema: dict):
         self.event_name = event_name
         self.schema = schema
 

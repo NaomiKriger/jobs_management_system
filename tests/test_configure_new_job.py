@@ -21,7 +21,9 @@ def test_valid_input(test_client):
     response = test_client.post(Endpoint.CONFIGURE_NEW_JOB.value, json=data)
     job = Job.query.filter_by(image_tag=data["image_tag"]).first()
     job_in_event = JobInEvent.query.filter_by(job_id=job.id).first()
-    event_id = Event.query.filter_by(event_name=event_name_pre_configured_in_db).first().id
+    event_id = (
+        Event.query.filter_by(event_name=event_name_pre_configured_in_db).first().id
+    )
 
     assert response.status_code == HTTPStatus.OK
     assert job is not None
@@ -76,7 +78,6 @@ class TestImageTag:
 
 
 class TestEventNames:
-
     data = valid_request_body.copy()
 
     def test_empty_event_names(self, test_client):

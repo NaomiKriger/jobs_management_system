@@ -2,18 +2,18 @@ from http import HTTPStatus
 from typing import Optional
 
 from flask import Response, make_response, request
-from pydantic import (ValidationError)
+from pydantic import ValidationError
 
 from src.consts import Endpoint
 from src.database import db
-from src.endpoints.common import get_event_names_from_db, add_entry
+from src.endpoints.common import add_entry, get_event_names_from_db
 from src.endpoints.configure_new_job_entity import JobConfigurationRequest
 from src.models.event import Event
 from src.models.job import Job
 from src.models.job_in_event import JobInEvent
 
 
-def get_input_event_names_that_are_not_found_in_db():
+def get_input_event_names_that_are_not_found_in_db() -> set:
     input_event_names = request.json["event_names"]
     input_event_names_found_in_db = get_event_names_from_db(input_event_names)
     input_events_that_are_not_in_db = set(input_event_names) - set(
@@ -60,7 +60,7 @@ def get_events_from_db_per_event_names(event_names: set) -> set:
     return events_to_return
 
 
-def add_record_to_job_table():
+def add_record_to_job_table() -> None:
     events_found_in_db = Event.query.filter(
         Event.event_name.in_(request.json["event_names"])
     ).all()
@@ -76,7 +76,7 @@ def add_record_to_job_table():
     )
 
 
-def add_record_to_job_in_event_table():
+def add_record_to_job_in_event_table() -> None:
     job = Job.query.filter_by(image_tag=request.json["image_tag"]).first()
     event_names_found_in_db = get_events_from_db_per_event_names(
         request.json["event_names"]
@@ -85,7 +85,7 @@ def add_record_to_job_in_event_table():
         add_entry(JobInEvent(job, event), db)
 
 
-def configure_new_job_response():
+def configure_new_job_response() -> Response:
     validation_response = ConfigureJobValidations.validate_job_parameters()
     if validation_response.status_code != HTTPStatus.OK:
         return validation_response

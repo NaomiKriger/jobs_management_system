@@ -1,5 +1,4 @@
 from http import HTTPStatus
-from typing import Optional
 
 from flask import Response, make_response, request
 from pydantic import ValidationError
@@ -10,7 +9,7 @@ from src.endpoints.configure_new_event_entity import EventConfigurationRequest
 from src.models.event import Event
 
 
-def validate_configure_new_event() -> Optional[Response]:
+def validate_configure_new_event() -> Response:
     try:
         EventConfigurationRequest.parse_obj(request.json)
     except ValidationError as e:
@@ -21,7 +20,7 @@ def validate_configure_new_event() -> Optional[Response]:
         return make_response(error_message, HTTPStatus.BAD_REQUEST)
 
 
-def configure_new_event_response():
+def configure_new_event_response() -> Response:
     validation_response = validate_configure_new_event()
     if validation_response:
         return validation_response
