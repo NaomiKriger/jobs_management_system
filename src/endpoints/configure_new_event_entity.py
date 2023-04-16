@@ -1,7 +1,6 @@
 from pydantic import BaseModel, Field, validator
 from pydantic.utils import to_camel
 
-from src.database import read_table
 from src.models.event import Event
 
 
@@ -17,7 +16,7 @@ class EventConfigurationRequest(BaseModel):
 
     @validator("event_name")
     def validate_event_name_already_exists(cls, event_name):
-        event_names = {event.event_name for event in read_table(Event)}
+        event_names = {event.event_name for event in Event.query.all()}
         if event_name in event_names:
             raise ValueError(f"event {event_name} already exists")
         return event_name

@@ -5,8 +5,8 @@ from flask import Response, make_response, request
 from pydantic import (ValidationError)
 
 from src.consts import Endpoint
-from src.database import add_entry, db, read_table
-from src.endpoints.commons import get_event_names_from_db
+from src.database import db
+from src.endpoints.common import get_event_names_from_db, add_entry
 from src.endpoints.configure_new_job_entity import JobConfigurationRequest
 from src.models.event import Event
 from src.models.job import Job
@@ -52,7 +52,7 @@ class ConfigureJobValidations:
 
 
 def get_events_from_db_per_event_names(event_names: set) -> set:
-    events = read_table(Event)
+    events = Event.query.all()
     events_to_return = set()
     for event in events:
         if event.event_name in event_names:

@@ -3,8 +3,7 @@ from typing import List
 from pydantic import BaseModel, Field, root_validator, validator
 from pydantic.utils import to_camel
 
-from src.database import read_table
-from src.endpoints.commons import get_event_names_from_db
+from src.endpoints.common import get_event_names_from_db
 from src.models.job import Job
 
 MAP_TYPES_TO_NAMES = {str: "string", int: "integer", list: "list", dict: "json"}
@@ -50,7 +49,7 @@ class JobConfigurationRequest(BaseModel):
 
     @validator("image_tag")
     def validate_image_tag_already_exists(cls, image_tag):
-        image_tags = {job.image_tag for job in read_table(Job)}
+        image_tags = {job.image_tag for job in Job.query.all()}
         if image_tag in image_tags:
             raise ValueError(f"image {image_tag} already exists")
         return image_tag

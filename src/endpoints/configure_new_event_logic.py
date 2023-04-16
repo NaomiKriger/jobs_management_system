@@ -4,7 +4,8 @@ from typing import Optional
 from flask import Response, make_response, request
 from pydantic import ValidationError
 
-from src.database import add_entry, db
+from src.database import db
+from src.endpoints.common import add_entry
 from src.endpoints.configure_new_event_entity import EventConfigurationRequest
 from src.models.event import Event
 
