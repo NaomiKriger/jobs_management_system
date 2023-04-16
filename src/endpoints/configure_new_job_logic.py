@@ -8,9 +8,9 @@ from src.consts import Endpoint
 from src.database import db
 from src.endpoints.common import add_entry, get_event_names_from_db
 from src.endpoints.configure_new_job_entity import JobConfigurationRequest
-from src.models.event import Event
-from src.models.job import Job
-from src.models.job_in_event import JobInEvent
+from src.models.events import Events
+from src.models.jobs import Jobs
+from src.models.jobs_in_events import JobsInEvents
 
 
 def get_input_event_names_that_are_not_found_in_db() -> set:
@@ -52,7 +52,7 @@ class ConfigureJobValidations:
 
 
 def get_events_from_db_per_event_names(event_names: set) -> set:
-    events = Event.query.all()
+    events = Events.query.all()
     events_to_return = set()
     for event in events:
         if event.event_name in event_names:
@@ -61,12 +61,12 @@ def get_events_from_db_per_event_names(event_names: set) -> set:
 
 
 def add_record_to_job_table() -> None:
-    events_found_in_db = Event.query.filter(
-        Event.event_name.in_(request.json["event_names"])
+    events_found_in_db = Events.query.filter(
+        Events.event_name.in_(request.json["event_names"])
     ).all()
     events_to_connect = [event.event_name for event in events_found_in_db]
     add_entry(
-        Job(
+        Jobs(
             request.json["image_tag"],
             request.json["schema"],
             events_to_connect,
@@ -77,12 +77,12 @@ def add_record_to_job_table() -> None:
 
 
 def add_record_to_job_in_event_table() -> None:
-    job = Job.query.filter_by(image_tag=request.json["image_tag"]).first()
+    job = Jobs.query.filter_by(image_tag=request.json["image_tag"]).first()
     event_names_found_in_db = get_events_from_db_per_event_names(
         request.json["event_names"]
     )
     for event in event_names_found_in_db:
-        add_entry(JobInEvent(job, event), db)
+        add_entry(JobsInEvents(job, event), db)
 
 
 def configure_new_job_response() -> Response:

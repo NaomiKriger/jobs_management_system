@@ -3,8 +3,8 @@ from sqlalchemy import JSON
 from src.database import db
 
 
-class Job(db.Model):
-    __tablename__ = "job"
+class Jobs(db.Model):
+    __tablename__ = "jobs"
 
     id = db.Column(db.Integer, primary_key=True)
     image_tag = db.Column(db.String(80), unique=True, nullable=False)
@@ -21,4 +21,4 @@ class Job(db.Model):
         self.expiration_days = expiration_days
 
     def __repr__(self):
-        return "<Job: %r>" % self.title
+        return "<Jobs: %r>" % self.title

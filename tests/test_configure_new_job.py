@@ -2,9 +2,9 @@ import uuid
 from http import HTTPStatus
 
 from src.consts import Endpoint
-from src.models.event import Event
-from src.models.job import Job
-from src.models.job_in_event import JobInEvent
+from src.models.events import Events
+from src.models.jobs import Jobs
+from src.models.jobs_in_events import JobsInEvents
 from tests.conftest import event_name_pre_configured_in_db
 from tests.mocks import basic_schema_mock
 
@@ -19,10 +19,10 @@ valid_request_body = {
 def test_valid_input(test_client):
     data = valid_request_body.copy()
     response = test_client.post(Endpoint.CONFIGURE_NEW_JOB.value, json=data)
-    job = Job.query.filter_by(image_tag=data["image_tag"]).first()
-    job_in_event = JobInEvent.query.filter_by(job_id=job.id).first()
+    job = Jobs.query.filter_by(image_tag=data["image_tag"]).first()
+    job_in_event = JobsInEvents.query.filter_by(job_id=job.id).first()
     event_id = (
-        Event.query.filter_by(event_name=event_name_pre_configured_in_db).first().id
+        Events.query.filter_by(event_name=event_name_pre_configured_in_db).first().id
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -121,10 +121,12 @@ class TestEventNames:
         event_not_in_db = str(uuid.uuid4())
         self.data["event_names"] = [event_not_in_db, event_name_pre_configured_in_db]
         response = test_client.post(Endpoint.CONFIGURE_NEW_JOB.value, json=self.data)
-        job = Job.query.filter_by(image_tag=self.data["image_tag"]).first()
-        job_in_event = JobInEvent.query.filter_by(job_id=job.id).first()
+        job = Jobs.query.filter_by(image_tag=self.data["image_tag"]).first()
+        job_in_event = JobsInEvents.query.filter_by(job_id=job.id).first()
         event_id = (
-            Event.query.filter_by(event_name=event_name_pre_configured_in_db).first().id
+            Events.query.filter_by(event_name=event_name_pre_configured_in_db)
+            .first()
+            .id
         )
 
         assert response.text == (

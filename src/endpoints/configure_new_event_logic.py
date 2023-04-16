@@ -6,7 +6,7 @@ from pydantic import ValidationError
 from src.database import db
 from src.endpoints.common import add_entry
 from src.endpoints.configure_new_event_entity import EventConfigurationRequest
-from src.models.event import Event
+from src.models.events import Events
 
 
 def validate_configure_new_event() -> Response:
@@ -26,6 +26,6 @@ def configure_new_event_response() -> Response:
         return validation_response
 
     event_name = request.json["event_name"]
-    add_entry(Event(event_name, request.json["schema"]), db)
+    add_entry(Events(event_name, request.json["schema"]), db)
 
     return make_response(f"event {event_name} added to the DB", HTTPStatus.OK)

@@ -1,7 +1,7 @@
 from http import HTTPStatus
 
 from src.consts import Endpoint
-from src.models.event import Event
+from src.models.events import Events
 from tests.mocks import basic_schema_mock
 
 
@@ -11,7 +11,7 @@ def test_valid_input(test_client):
         "schema": basic_schema_mock,
     }
     response = test_client.post(Endpoint.CONFIGURE_NEW_EVENT.value, json=data)
-    event = Event.query.filter_by(event_name=data["event_name"]).first()
+    event = Events.query.filter_by(event_name=data["event_name"]).first()
     assert response.status_code == HTTPStatus.OK
     assert response.text == f"event {data['event_name']} added to the DB"
     assert event is not None

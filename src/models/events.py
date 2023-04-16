@@ -3,8 +3,8 @@ from sqlalchemy import JSON
 from src.database import db
 
 
-class Event(db.Model):
-    __tablename__ = "event"
+class Events(db.Model):
+    __tablename__ = "events"
 
     id = db.Column(db.Integer, primary_key=True)
     event_name = db.Column(db.String(80), unique=True, nullable=False)
@@ -15,4 +15,4 @@ class Event(db.Model):
         self.schema = schema
 
     def __repr__(self):
-        return "<Event: %r>" % self.title
+        return "<Events: %r>" % self.title
