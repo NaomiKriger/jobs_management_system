@@ -23,12 +23,6 @@ class EventConfigurationRequest(BaseModel):
             raise ValueError(f"event {event_name} already exists")
         return event_name
 
-    @validator("request_schema", pre=True)
-    def validate_schema_is_a_json(cls, schema: dict) -> Optional[dict]:
-        if not isinstance(schema, dict):
-            raise ValueError("input should be a json")
-        return schema
-
     class Config:
         allow_population_by_field_name = True
         use_enum_values = True

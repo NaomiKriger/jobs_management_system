@@ -90,4 +90,4 @@ class TestSchema:
         data = {"event_name": "test_event_4", "schema": "hey there"}
         response = test_client.post(Endpoint.CONFIGURE_NEW_EVENT.value, json=data)
         assert response.status_code == HTTPStatus.BAD_REQUEST
-        assert response.text == "schema: input should be a json"
+        assert response.text == "schema: value is not a valid dict"

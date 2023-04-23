@@ -23,12 +23,6 @@ class JobConfigurationRequest(BaseModel):
                 raise ValueError(f"{field_name} cannot be empty")
         return values
 
-    @validator("request_schema", pre=True)
-    def validate_schema_is_a_json(cls, schema: dict) -> dict:
-        if not isinstance(schema, dict):
-            raise ValueError("input should be a json")
-        return schema
-
     @validator("event_names", pre=True)
     def validate_event_names_is_list_of_strings(cls, event_names: list) -> list:
         for event_name in event_names:
