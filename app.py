@@ -1,7 +1,7 @@
 import os
 
 from dotenv import load_dotenv
-from flask import Flask, Response, make_response
+from flask import Flask, Response, make_response, request
 
 from src.consts import Endpoint
 from src.database import db
@@ -24,17 +24,17 @@ def index():
 
 @app.route(Endpoint.CONFIGURE_NEW_EVENT.value, methods=["POST"])
 def configure_new_event() -> Response:
-    return configure_new_event_response()
+    return configure_new_event_response(request.json)
 
 
 @app.route(Endpoint.CONFIGURE_NEW_JOB.value, methods=["POST"])
 def configure_new_job() -> Response:
-    return configure_new_job_response()
+    return configure_new_job_response(request.json)
 
 
 @app.route(Endpoint.EXECUTE_JOB_BY_IMAGE_TAG.value, methods=["POST"])
 def execute_job_by_image_tag() -> Response:
-    return execute_job_by_image_tag_response()
+    return execute_job_by_image_tag_response(request.json)
 
 
 @app.route(Endpoint.EXECUTE_JOBS_BY_EVENT.value, methods=["POST"])
