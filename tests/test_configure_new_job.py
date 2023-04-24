@@ -165,7 +165,10 @@ class TestSchema:
         self.data["schema"] = "abc"
         response = test_client.post(Endpoint.CONFIGURE_NEW_JOB.value, json=self.data)
         assert response.status_code == HTTPStatus.BAD_REQUEST
-        assert response.text == "schema: Expected type json for field request_schema, but got string instead."
+        assert (
+            response.text
+            == "schema: Expected type json for field request_schema, but got string instead."
+        )
 
 
 class TestExpirationDays:

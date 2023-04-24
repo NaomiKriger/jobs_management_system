@@ -1,7 +1,6 @@
 from http import HTTPStatus
 from typing import Optional
 
-import flask
 from flask import Response, make_response
 from pydantic import ValidationError
 
