@@ -3,7 +3,7 @@ import os
 import pytest
 from dotenv import load_dotenv
 
-from app import app
+from main import app
 from src.database import db
 from src.models.events import Events
 from tests.mocks import basic_schema_mock
