@@ -7,14 +7,8 @@ from src.models.events import Events
 
 
 class EventConfigurationRequest(BaseModel):
-    event_name: str
+    event_name: str = Field(..., min_length=1)
     request_schema: dict = Field(..., alias="schema")
-
-    @validator("event_name")
-    def validate_event_name_is_not_empty(cls, event_name: str) -> Optional[str]:
-        if not event_name:
-            raise ValueError("input cannot be empty")
-        return event_name
 
     @validator("event_name")
     def validate_event_name_already_exists(cls, event_name: str) -> Optional[str]:

@@ -43,7 +43,7 @@ class TestEventName:
         }
         response = test_client.post(Endpoint.CONFIGURE_NEW_EVENT.value, json=data)
         assert response.status_code == HTTPStatus.BAD_REQUEST
-        assert response.text == "EventName: input cannot be empty"
+        assert response.text == "EventName: ensure this value has at least 1 characters"
 
     def test_event_name_input_is_not_a_string(self, test_client):
         # event_name is automatically cast to string by Pydantic
