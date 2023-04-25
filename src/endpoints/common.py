@@ -24,7 +24,7 @@ def validate_request_parameters(request_object: Any, request_body: dict) -> Resp
     except ValidationError as e:
         error_message = ""
         for error in e.errors():
-            field_name = error['loc'][-1]
+            field_name = error["loc"][-1]
             prefix = f"{field_name}: " if field_name != "__root__" else ""
             error_message = ", ".join(
                 [f"{prefix}" f"{error['msg']}" for error in e.errors()]

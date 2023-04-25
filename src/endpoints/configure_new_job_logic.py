@@ -7,10 +7,10 @@ from src.consts import Endpoint
 from src.database import db
 from src.endpoints.common import (add_entry, get_event_names_from_db,
                                   validate_request_parameters)
-from src.endpoints.configure_new_job_entity import JobConfigurationRequest
 from src.models.events import Events
 from src.models.jobs import Jobs
 from src.models.jobs_in_events import JobsInEvents
+from src.serializers.configure_new_job import JobConfigurationRequest
 
 
 def get_input_event_names_that_are_not_found_in_db(event_names: list) -> set:

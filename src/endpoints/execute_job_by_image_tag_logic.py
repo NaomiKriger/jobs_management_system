@@ -7,8 +7,8 @@ from flask import Response, make_response
 
 from src.aws_operations import ecr_login
 from src.endpoints.common import validate_request_parameters
-from src.endpoints.execute_job_by_image_tag_entity import JobExecutionRequest
 from src.models.jobs import Jobs
+from src.serializers.execute_job_by_image_tag import JobExecutionRequest
 
 
 def get_execution_command(
@@ -47,10 +47,7 @@ def get_execute_job_parameters(request_body: dict) -> tuple:
 
 
 def is_image_tag_in_db(image_tag: str) -> bool:
-    job = Jobs.query.filter_by(image_tag=image_tag).first()
-    if not job:
-        return False
-    return True
+    return bool(Jobs.query.filter_by(image_tag=image_tag).first())
 
 
 def execute_job_by_image_tag_response(request_body: dict) -> Response:
