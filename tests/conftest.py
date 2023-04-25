@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from main import app
 from src.database import db
 from src.models.events import Events
+from src.models.jobs import Jobs
 from tests.mocks import basic_schema_mock
 
 load_dotenv()
@@ -22,6 +23,19 @@ def test_client():
         db.init_app(app)
         db.create_all()
         db.session.add(Events(event_name_pre_configured_in_db, basic_schema_mock), db)
+        db.session.commit()
+        db.session.add(
+            Jobs(
+                "sample_job_1_v4",
+                basic_schema_mock,
+                [event_name_pre_configured_in_db],
+                365,
+            ),
+            db,
+        )
+        db.session.add(
+            Jobs("123", basic_schema_mock, [event_name_pre_configured_in_db], 365), db
+        )
         db.session.commit()
         yield app.test_client()
         db.session.rollback()
