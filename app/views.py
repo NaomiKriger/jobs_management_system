@@ -1,10 +1,9 @@
 from flask import Blueprint, Response, make_response, request
 
 from src.consts import Endpoint
-from src.endpoints.configure_new_event_logic import \
-    configure_new_event_response
-from src.endpoints.configure_new_job_logic import configure_new_job_response
-from src.endpoints.execute_job_by_image_tag_logic import \
+from src.endpoints.configure_new_event import configure_new_event_response
+from src.endpoints.configure_new_job import configure_new_job_response
+from src.endpoints.execute_job_by_image_tag import \
     execute_job_by_image_tag_response
 
 views = Blueprint("views", __name__)
