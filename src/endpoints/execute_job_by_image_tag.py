@@ -38,7 +38,7 @@ def get_execution_flags(execution_parameters: dict) -> list:
     return flags
 
 
-def get_execute_job_parameters(request_body: dict) -> tuple:
+def get_request_parameters(request_body: dict) -> tuple:
     image_tag = str(request_body.get("image_tag"))
     execution_parameters = request_body.get("execution_parameters")
     executable_file_name = request_body.get("executable_file_name")
@@ -55,7 +55,7 @@ def execute_job_by_image_tag_response(request_body: dict) -> Response:
     if validation_response:
         return validation_response
 
-    image_tag, execution_parameters, executable_file_name = get_execute_job_parameters(
+    image_tag, execution_parameters, executable_file_name = get_request_parameters(
         request_body
     )
 

@@ -8,7 +8,7 @@ from src.models.events import Events
 from src.serializers.configure_new_event import EventConfigurationRequest
 
 
-def get_event_parameters(request_body: dict) -> tuple:
+def get_request_parameters(request_body: dict) -> tuple:
     event_name = request_body.get("event_name")
     schema = request_body.get("schema")
 
@@ -22,7 +22,7 @@ def configure_new_event_response(request_body: dict) -> Response:
     if validation_response:
         return validation_response
 
-    event_name, schema = get_event_parameters(request_body)
+    event_name, schema = get_request_parameters(request_body)
     add_entry(Events(event_name, schema), db)
 
     return make_response(f"event {event_name} added to the DB", HTTPStatus.OK)

@@ -67,7 +67,7 @@ def add_record_to_job_in_event_table(image_tag: str, event_names: list) -> None:
         add_entry(JobsInEvents(job, event), db)
 
 
-def get_job_parameters(request_body: dict) -> tuple:
+def get_request_parameters(request_body: dict) -> tuple:
     image_tag = request_body.get("image_tag")
     event_names = request_body.get("event_names")
     request_schema = request_body.get("request_schema")
@@ -85,7 +85,7 @@ def configure_new_job_response(request_body: dict) -> Response:
 
     validation_response = response_notes(request_body)
 
-    image_tag, event_names, request_schema, expiration_days = get_job_parameters(
+    image_tag, event_names, request_schema, expiration_days = get_request_parameters(
         request_body
     )
 
