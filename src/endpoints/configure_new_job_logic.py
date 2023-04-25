@@ -2,11 +2,11 @@ from http import HTTPStatus
 from typing import Optional
 
 from flask import Response, make_response
-from pydantic import ValidationError
 
 from src.consts import Endpoint
 from src.database import db
-from src.endpoints.common import add_entry, get_event_names_from_db
+from src.endpoints.common import (add_entry, get_event_names_from_db,
+                                  validate_request_parameters)
 from src.endpoints.configure_new_job_entity import JobConfigurationRequest
 from src.models.events import Events
 from src.models.jobs import Jobs
@@ -22,35 +22,17 @@ def get_input_event_names_that_are_not_found_in_db(event_names: list) -> set:
     return input_events_that_are_not_in_db
 
 
-class ConfigureJobValidations:
-    @staticmethod
-    def validate_job_parameters(request_body: dict) -> Optional[Response]:
-        try:
-            JobConfigurationRequest.parse_obj(request_body)
-        except ValidationError as e:
-            error_message = ""
-            # error['loc'][-1] is the field's name
-            for error in e.errors():
-                prefix = (
-                    f"{error['loc'][-1]}: " if error["loc"][-1] != "__root__" else ""
-                )
-                error_message = ", ".join(
-                    [f"{prefix}" f"{error['msg']}" for error in e.errors()]
-                )
-            return make_response(error_message, HTTPStatus.BAD_REQUEST)
-
-        notes = []
-        input_events_that_are_not_found_in_db = (
-            get_input_event_names_that_are_not_found_in_db(
-                request_body.get("event_names")
-            )
+def response_notes(request_body: dict) -> Optional[Response]:
+    notes = []
+    input_events_that_are_not_found_in_db = (
+        get_input_event_names_that_are_not_found_in_db(request_body.get("event_names"))
+    )
+    if input_events_that_are_not_found_in_db:
+        notes.append(
+            f"the following event names were not found in DB and therefore "
+            f"the job wasn't connected to them: {list(input_events_that_are_not_found_in_db)}"
         )
-        if input_events_that_are_not_found_in_db:
-            notes.append(
-                f"the following event names were not found in DB and therefore "
-                f"the job wasn't connected to them: {list(input_events_that_are_not_found_in_db)}"
-            )
-        return make_response(f"Job configured. Notes:{notes}", HTTPStatus.OK)
+    return make_response(f"Job configured. Notes:{notes}", HTTPStatus.OK)
 
 
 def get_events_from_db_per_event_names(event_names: set) -> set:
@@ -65,7 +47,7 @@ def get_events_from_db_per_event_names(event_names: set) -> set:
 def add_record_to_job_table(
     image_tag: str, event_names: list, request_schema: dict, expiration_days: int
 ) -> None:
-    events_found_in_db = Events.query.filter(Events.event_name.in_(event_names)).all()
+    events_found_in_db = get_event_names_from_db(event_names)
     events_to_connect = [event.event_name for event in events_found_in_db]
     add_entry(
         Jobs(
@@ -95,9 +77,13 @@ def get_job_parameters(request_body: dict) -> tuple:
 
 
 def configure_new_job_response(request_body: dict) -> Response:
-    validation_response = ConfigureJobValidations.validate_job_parameters(request_body)
-    if validation_response.status_code != HTTPStatus.OK:
+    validation_response = validate_request_parameters(
+        JobConfigurationRequest, request_body
+    )
+    if validation_response and validation_response.status_code != HTTPStatus.OK:
         return validation_response
+
+    validation_response = response_notes(request_body)
 
     image_tag, event_names, request_schema, expiration_days = get_job_parameters(
         request_body

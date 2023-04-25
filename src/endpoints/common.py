@@ -1,4 +1,9 @@
+from http import HTTPStatus
+from typing import Any
+
+from flask import Response, make_response
 from flask_sqlalchemy import SQLAlchemy
+from pydantic import ValidationError
 
 from src.database import db
 from src.models.events import Events
@@ -11,3 +16,17 @@ def get_event_names_from_db(event_names: list) -> list:
 def add_entry(entry: db.Model, db_instance: SQLAlchemy) -> None:
     db_instance.session.add(entry)
     db_instance.session.commit()
+
+
+def validate_request_parameters(request_object: Any, request_body: dict) -> Response:
+    try:
+        request_object.parse_obj(request_body)
+    except ValidationError as e:
+        error_message = ""
+        # error['loc'][-1] is the field's name
+        for error in e.errors():
+            prefix = f"{error['loc'][-1]}: " if error["loc"][-1] != "__root__" else ""
+            error_message = ", ".join(
+                [f"{prefix}" f"{error['msg']}" for error in e.errors()]
+            )
+        return make_response(error_message, HTTPStatus.BAD_REQUEST)

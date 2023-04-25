@@ -1,23 +1,11 @@
 from http import HTTPStatus
 
 from flask import Response, make_response
-from pydantic import ValidationError
 
 from src.database import db
-from src.endpoints.common import add_entry
+from src.endpoints.common import add_entry, validate_request_parameters
 from src.endpoints.configure_new_event_entity import EventConfigurationRequest
 from src.models.events import Events
-
-
-def validate_configure_new_event(request_body: dict) -> Response:
-    try:
-        EventConfigurationRequest.parse_obj(request_body)
-    except ValidationError as e:
-        # error['loc'][-1] is the field's name
-        error_message = ", ".join(
-            [f"{error['loc'][-1]}: {error['msg']}" for error in e.errors()]
-        )
-        return make_response(error_message, HTTPStatus.BAD_REQUEST)
 
 
 def get_event_parameters(request_body: dict) -> tuple:
@@ -28,7 +16,7 @@ def get_event_parameters(request_body: dict) -> tuple:
 
 
 def configure_new_event_response(request_body: dict) -> Response:
-    validation_response = validate_configure_new_event(request_body)
+    validation_response = validate_request_parameters(EventConfigurationRequest, request_body)
     if validation_response:
         return validation_response
 

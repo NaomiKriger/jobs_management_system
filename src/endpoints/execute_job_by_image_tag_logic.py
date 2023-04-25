@@ -4,9 +4,9 @@ from http import HTTPStatus
 from typing import List
 
 from flask import Response, make_response
-from pydantic import ValidationError
 
 from src.aws_operations import ecr_login
+from src.endpoints.common import validate_request_parameters
 from src.endpoints.execute_job_by_image_tag_entity import JobExecutionRequest
 from src.models.jobs import Jobs
 
@@ -46,17 +46,6 @@ def get_execute_job_parameters(request_body: dict) -> tuple:
     return image_tag, execution_parameters, executable_file_name
 
 
-def validate_execute_job_by_image_tag(request_body: dict) -> Response:
-    try:
-        JobExecutionRequest.parse_obj(request_body)
-    except ValidationError as e:
-        # error['loc'][-1] is the field's name
-        error_message = ", ".join(
-            [f"{error['loc'][-1]}: {error['msg']}" for error in e.errors()]
-        )
-        return make_response(error_message, HTTPStatus.BAD_REQUEST)
-
-
 def is_image_tag_in_db(image_tag: str) -> bool:
     job = Jobs.query.filter_by(image_tag=image_tag).first()
     if not job:
@@ -65,7 +54,7 @@ def is_image_tag_in_db(image_tag: str) -> bool:
 
 
 def execute_job_by_image_tag_response(request_body: dict) -> Response:
-    validation_response = validate_execute_job_by_image_tag(request_body)
+    validation_response = validate_request_parameters(JobExecutionRequest, request_body)
     if validation_response:
         return validation_response
 
