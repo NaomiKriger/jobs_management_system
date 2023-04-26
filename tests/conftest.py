@@ -12,6 +12,7 @@ from tests.mocks import basic_schema_mock
 load_dotenv()
 
 event_name_pre_configured_in_db = "event_name_pre_configured_in_db"
+image_tag_1_in_ecr = "sample_job_1_v5"
 
 
 @pytest.fixture(scope="session")
@@ -26,7 +27,7 @@ def test_client():
         db.session.commit()
         db.session.add(
             Jobs(
-                "sample_job_1_v4",
+                image_tag_1_in_ecr,
                 basic_schema_mock,
                 [event_name_pre_configured_in_db],
                 365,

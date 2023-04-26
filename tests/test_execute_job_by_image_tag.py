@@ -1,19 +1,20 @@
 from http import HTTPStatus
 
 from src.consts import Endpoint
+from tests.conftest import image_tag_1_in_ecr
 
 
 # TODO: add basic test job + test repo in ECR + get_repo() method for prod and test
-# TODO: add test images to ECR test, so I won't have to test against `sample_job_1_v4`
+# TODO: add test images to ECR test, so I won't have to test against prod ECR repo
 # TODO: consider docker for testing instead of ECR test repo
 def test_valid_input(test_client):
     data = {
-        "image_tag": "sample_job_1_v4",
+        "image_tag": image_tag_1_in_ecr,
         "execution_parameters": {
             "source_name": "wabetainfo",
             "url": "https://wabetainfo.com/updates/?filter=1",
         },
-        "executable_file_name": "job_1.py",
+        "executable_file_name": "main.py",
     }
     response = test_client.post(Endpoint.EXECUTE_JOB_BY_IMAGE_TAG.value, json=data)
     assert response.status_code == HTTPStatus.OK
@@ -23,12 +24,12 @@ def test_valid_input(test_client):
 
 class TestImageTag:
     data = {
-        "image_tag": "sample_job_1_v4",
+        "image_tag": image_tag_1_in_ecr,
         "execution_parameters": {
             "source_name": "wabetainfo",
             "url": "https://wabetainfo.com/updates/?filter=1",
         },
-        "executable_file_name": "job_1.py",
+        "executable_file_name": "main.py",
     }
 
     def test_missing_image_tag(self, test_client):
@@ -66,12 +67,12 @@ class TestImageTag:
 
 class TestExecutionParameters:
     data = {
-        "image_tag": "sample_job_1_v4",
+        "image_tag": image_tag_1_in_ecr,
         "execution_parameters": {
             "source_name": "wabetainfo",
             "url": "https://wabetainfo.com/updates/?filter=1",
         },
-        "executable_file_name": "job_1.py",
+        "executable_file_name": "main.py",
     }
 
     def test_missing_execution_parameters(self, test_client):
@@ -91,12 +92,12 @@ class TestExecutionParameters:
 
 class TestExecutableFileName:
     data = {
-        "image_tag": "sample_job_1_v4",
+        "image_tag": image_tag_1_in_ecr,
         "execution_parameters": {
             "source_name": "wabetainfo",
             "url": "https://wabetainfo.com/updates/?filter=1",
         },
-        "executable_file_name": "job_1.py",
+        "executable_file_name": "main.py",
     }
 
     def test_missing_executable_file_name(self, test_client):

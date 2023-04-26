@@ -41,6 +41,7 @@ def get_execution_flags(execution_parameters: dict) -> list:
 def get_request_parameters(request_body: dict) -> tuple:
     image_tag = str(request_body.get("image_tag"))
     execution_parameters = request_body.get("execution_parameters")
+    # TODO: remove executable_file_name field from now on the value is "main.py" for all jobs (prerequisite for users)
     executable_file_name = request_body.get("executable_file_name")
 
     return image_tag, execution_parameters, executable_file_name
