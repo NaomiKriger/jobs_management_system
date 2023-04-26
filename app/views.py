@@ -5,6 +5,7 @@ from src.endpoints.configure_new_event import configure_new_event_response
 from src.endpoints.configure_new_job import configure_new_job_response
 from src.endpoints.execute_job_by_image_tag import \
     execute_job_by_image_tag_response
+from src.endpoints.execute_jobs_by_event import execute_jobs_by_event_response
 
 views = Blueprint("views", __name__)
 
@@ -31,7 +32,7 @@ def execute_job_by_image_tag() -> Response:
 
 @views.route(Endpoint.EXECUTE_JOBS_BY_EVENT.value, methods=["POST"])
 def execute_jobs_by_event() -> Response:
-    return make_response(f"{execute_jobs_by_event.__name__} is executed")
+    return execute_jobs_by_event_response(request.json)
 
 
 @views.route(Endpoint.VIEW_EVENT_INFO.value, methods=["GET"])
