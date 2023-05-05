@@ -40,6 +40,7 @@ def execute_jobs_by_event_response(request_body: dict) -> Response:
     image_tags = get_image_tags_of_all_jobs_connected_to_event(event_name)
 
     responses = []
+    # TODO: thread pool
     for image_tag in image_tags:
         response = execute_job_by_image_tag_response(
             {

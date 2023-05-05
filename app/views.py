@@ -30,6 +30,11 @@ def execute_job_by_image_tag() -> Response:
     return execute_job_by_image_tag_response(request.json)
 
 
+@views.route(Endpoint.EXECUTE_JOB_BY_IMAGE_TAG_BATCH.value, methods=["POST"])
+def execute_job_by_image_tag_batch() -> Response:
+    return make_response(f"{execute_job_by_image_tag_batch.__name__} is executed")
+
+
 @views.route(Endpoint.EXECUTE_JOBS_BY_EVENT.value, methods=["POST"])
 def execute_jobs_by_event() -> Response:
     return execute_jobs_by_event_response(request.json)
